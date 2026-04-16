@@ -138,6 +138,53 @@ const tools: Anthropic.Tool[] = [
       required: ["id"],
     },
   },
+  {
+    name: "update_client",
+    description:
+      "Update an existing client. Provide the client id and the fields to update.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        id: { type: "string", description: "UUID of the client to update" },
+        name: { type: "string" },
+        description: { type: "string" },
+        employee_count: { type: "number" },
+        user_count: { type: "number" },
+        avatar_count: { type: "number" },
+        price_per_avatar: { type: "number" },
+        country: { type: "string" },
+        tenant_url: { type: "string" },
+        contact_first_name: { type: "string" },
+        contact_last_name: { type: "string" },
+        contact_email: { type: "string" },
+        contact_phone: { type: "string" },
+      },
+      required: ["id"],
+    },
+  },
+  {
+    name: "update_trial",
+    description:
+      "Update an existing trial. Provide the trial id and the fields to update.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        id: { type: "string", description: "UUID of the trial to update" },
+        name: { type: "string" },
+        description: { type: "string" },
+        employee_count: { type: "number" },
+        user_count: { type: "number" },
+        avatar_count: { type: "number" },
+        country: { type: "string" },
+        tenant_url: { type: "string" },
+        contact_first_name: { type: "string" },
+        contact_last_name: { type: "string" },
+        contact_email: { type: "string" },
+        contact_phone: { type: "string" },
+      },
+      required: ["id"],
+    },
+  },
 ];
 
 const SYSTEM_PROMPT = `You are Mensis AI, the internal sales assistant for Mensis Mentor LLC. You help the team manage their CRM — contacts, partners, trials, clients, goals, and revenue metrics.
@@ -145,6 +192,7 @@ const SYSTEM_PROMPT = `You are Mensis AI, the internal sales assistant for Mensi
 Your capabilities:
 - Query contacts, partners, trials, clients, and goals from the database using tools
 - Create new contacts or partners from pasted conversations (LinkedIn messages, emails, etc)
+- Update existing contacts, clients, and trials (price, avatars, country, etc)
 - Provide insights about pipeline (contacts/partners → trials → clients), MRR, avatars, and growth potential
 - Partners goal: 100 partners by end of 2026
 - Avatars goal: 600 avatars by end of 2026
@@ -225,6 +273,28 @@ async function handleToolCall(
       const { id, ...updates } = toolInput as { id: string; [key: string]: unknown };
       const { data, error } = await supabase
         .from("leads")
+        .update(updates)
+        .eq("id", id)
+        .select()
+        .single();
+      if (error) return JSON.stringify({ error: error.message });
+      return JSON.stringify(data);
+    }
+    case "update_client": {
+      const { id, ...updates } = toolInput as { id: string; [key: string]: unknown };
+      const { data, error } = await supabase
+        .from("clients")
+        .update(updates)
+        .eq("id", id)
+        .select()
+        .single();
+      if (error) return JSON.stringify({ error: error.message });
+      return JSON.stringify(data);
+    }
+    case "update_trial": {
+      const { id, ...updates } = toolInput as { id: string; [key: string]: unknown };
+      const { data, error } = await supabase
+        .from("trials")
         .update(updates)
         .eq("id", id)
         .select()
