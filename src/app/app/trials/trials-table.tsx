@@ -85,7 +85,22 @@ export function TrialsTable({ trials }: { trials: Trial[] }) {
                     {t.avatar_count.toLocaleString()}
                   </td>
                   <td className="px-4 py-3 text-xs text-zinc-500">
-                    {t.tenant_url ?? "—"}
+                    {t.tenant_url ? (
+                      <a
+                        href={`https://${t.tenant_url}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="inline-flex items-center gap-1 text-brand hover:underline"
+                      >
+                        {t.tenant_url}
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                          <polyline points="15 3 21 3 21 9" />
+                          <line x1="10" y1="14" x2="21" y2="3" />
+                        </svg>
+                      </a>
+                    ) : "—"}
                   </td>
                   <td className="px-4 py-3 text-sm text-zinc-500">
                     {t.contact_first_name} {t.contact_last_name}

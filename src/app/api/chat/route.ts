@@ -99,6 +99,45 @@ const tools: Anthropic.Tool[] = [
       required: ["name", "category"],
     },
   },
+  {
+    name: "create_partner",
+    description:
+      "Create a confirmed partner in the partners table.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        name: { type: "string", description: "Partner company or person name" },
+        description: { type: "string", description: "What the partner does" },
+        country: { type: "string", description: "Country" },
+        contact_first_name: { type: "string", description: "Contact first name" },
+        contact_last_name: { type: "string", description: "Contact last name" },
+        contact_email: { type: "string", description: "Contact email" },
+        contact_phone: { type: "string", description: "Contact phone" },
+      },
+      required: ["name"],
+    },
+  },
+  {
+    name: "update_contact",
+    description:
+      "Update an existing contact/lead. Provide the contact id and the fields to update.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        id: { type: "string", description: "UUID of the contact to update" },
+        name: { type: "string" },
+        email: { type: "string" },
+        phone: { type: "string" },
+        company: { type: "string" },
+        title: { type: "string" },
+        category: { type: "string", enum: ["partner", "cliente_final"] },
+        status: { type: "string", enum: ["new", "contacted", "responded", "qualified", "proposal", "won", "lost"] },
+        source: { type: "string" },
+        notes: { type: "string" },
+      },
+      required: ["id"],
+    },
+  },
 ];
 
 const SYSTEM_PROMPT = `You are Mensis AI, the internal sales assistant for Mensis Mentor LLC. You help the team manage their CRM — contacts, partners, trials, clients, goals, and revenue metrics.
@@ -168,6 +207,26 @@ async function handleToolCall(
       const { data, error } = await supabase
         .from("leads")
         .insert(toolInput)
+        .select()
+        .single();
+      if (error) return JSON.stringify({ error: error.message });
+      return JSON.stringify(data);
+    }
+    case "create_partner": {
+      const { data, error } = await supabase
+        .from("partners")
+        .insert(toolInput)
+        .select()
+        .single();
+      if (error) return JSON.stringify({ error: error.message });
+      return JSON.stringify(data);
+    }
+    case "update_contact": {
+      const { id, ...updates } = toolInput as { id: string; [key: string]: unknown };
+      const { data, error } = await supabase
+        .from("leads")
+        .update(updates)
+        .eq("id", id)
         .select()
         .single();
       if (error) return JSON.stringify({ error: error.message });

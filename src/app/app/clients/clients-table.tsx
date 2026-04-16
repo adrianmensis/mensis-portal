@@ -69,6 +69,9 @@ export function ClientsTable({ clients }: { clients: Client[] }) {
                 Growth Pot.
               </th>
               <th className="whitespace-nowrap px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                Tenant
+              </th>
+              <th className="whitespace-nowrap px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-500">
                 Contact
               </th>
               <th className="whitespace-nowrap px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-500">
@@ -116,6 +119,24 @@ export function ClientsTable({ clients }: { clients: Client[] }) {
                         {growth > 0 ? `+${growth}` : growth}
                       </span>
                     </td>
+                    <td className="px-4 py-3 text-xs text-zinc-500">
+                      {c.tenant_url ? (
+                        <a
+                          href={`https://${c.tenant_url}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="inline-flex items-center gap-1 text-brand hover:underline"
+                        >
+                          {c.tenant_url}
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                            <polyline points="15 3 21 3 21 9" />
+                            <line x1="10" y1="14" x2="21" y2="3" />
+                          </svg>
+                        </a>
+                      ) : "—"}
+                    </td>
                     <td className="px-4 py-3 text-sm text-zinc-500">
                       {c.contact_first_name} {c.contact_last_name}
                     </td>
@@ -132,7 +153,7 @@ export function ClientsTable({ clients }: { clients: Client[] }) {
             ) : (
               <tr>
                 <td
-                  colSpan={10}
+                  colSpan={11}
                   className="px-4 py-12 text-center text-sm text-zinc-400"
                 >
                   No clients yet.
