@@ -17,6 +17,9 @@ export const metadata: Metadata = {
   title: "Mensis — Knowledge never dies.",
   description:
     "You know things no one else does. Mensis preserves expertise as living avatars.",
+  icons: {
+    icon: "/isotipo.png",
+  },
 };
 
 export default function RootLayout({
