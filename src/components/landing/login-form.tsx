@@ -12,7 +12,7 @@ export function LoginForm() {
   return (
     <form
       action={action}
-      className="flex w-full max-w-lg flex-col gap-5 text-left"
+      className="flex w-full max-w-xl flex-col gap-5 text-left"
     >
       <input
         name="email"
