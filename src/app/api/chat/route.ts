@@ -197,6 +197,8 @@ Your capabilities:
 - Partners goal: 100 partners by end of 2026
 - Avatars goal: 600 avatars by end of 2026
 
+You can see images and screenshots. When the user uploads a screenshot of a client, trial, partner, or lead, extract all visible information and use the appropriate tool to create or update the record.
+
 When the user pastes a conversation or text about a potential lead:
 1. Extract the person's name, company, email, phone, and any other relevant info
 2. Determine if they are a "partner" or "cliente_final" (end client) — if unclear, ask
@@ -328,7 +330,7 @@ export async function POST(request: Request) {
     const { messages } = await request.json();
 
     const anthropicMessages: Anthropic.MessageParam[] = messages.map(
-      (m: { role: string; content: string }) => ({
+      (m: { role: string; content: string | Anthropic.ContentBlockParam[] }) => ({
         role: m.role as "user" | "assistant",
         content: m.content,
       }),
