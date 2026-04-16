@@ -39,7 +39,7 @@ export function LoginForm() {
           disabled={pending}
           className="h-[52px] w-full rounded-xl bg-brand text-[15px] font-medium text-white transition-colors hover:bg-brand/90 disabled:opacity-60"
         >
-          {pending ? "Logging in..." : "Continue"}
+          {pending ? "Logging in..." : "Login"}
         </button>
       </form>
     </div>
