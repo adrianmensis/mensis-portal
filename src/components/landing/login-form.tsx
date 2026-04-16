@@ -12,7 +12,7 @@ export function LoginForm() {
   return (
     <form
       action={action}
-      className="flex w-full max-w-xs flex-col gap-3 text-left"
+      className="flex w-full max-w-sm flex-col gap-5 text-left"
     >
       <input
         name="email"
@@ -20,7 +20,7 @@ export function LoginForm() {
         placeholder="Email"
         autoComplete="email"
         required
-        className="h-11 w-full rounded-md border border-brand-light/70 bg-white px-4 text-sm text-brand placeholder:text-zinc-400 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/15"
+        className="border-0 border-b border-brand-light bg-transparent px-1 py-3 text-base text-brand placeholder:text-brand/40 focus:border-brand focus:outline-none focus:ring-0"
       />
       <input
         name="password"
@@ -28,7 +28,7 @@ export function LoginForm() {
         placeholder="Password"
         autoComplete="current-password"
         required
-        className="h-11 w-full rounded-md border border-brand-light/70 bg-white px-4 text-sm text-brand placeholder:text-zinc-400 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/15"
+        className="border-0 border-b border-brand-light bg-transparent px-1 py-3 text-base text-brand placeholder:text-brand/40 focus:border-brand focus:outline-none focus:ring-0"
       />
       {state?.error && (
         <p className="text-center text-xs text-red-600">{state.error}</p>
@@ -36,9 +36,9 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={pending}
-        className="mt-1 inline-flex h-11 items-center justify-center rounded-md bg-brand px-6 text-sm font-medium text-white shadow-[0_8px_24px_-6px_rgba(39,59,124,0.4)] transition-colors hover:bg-brand/90 disabled:opacity-60"
+        className="mt-3 inline-flex h-14 w-full items-center justify-center rounded-md bg-brand px-6 text-base font-medium text-white shadow-[0_10px_30px_-8px_rgba(39,59,124,0.45)] transition-colors hover:bg-brand/90 disabled:opacity-60"
       >
-        {pending ? "Entering…" : "Enter"}
+        {pending ? "Logging in…" : "Login"}
       </button>
     </form>
   );
