@@ -12,7 +12,7 @@ export function LoginForm() {
   return (
     <form
       action={action}
-      className="flex w-full max-w-xs flex-col gap-4 text-left"
+      className="flex w-full max-w-xs flex-col gap-3 text-left"
     >
       <input
         name="email"
@@ -20,7 +20,7 @@ export function LoginForm() {
         placeholder="Email"
         autoComplete="email"
         required
-        className="border-0 border-b border-white/20 bg-transparent px-1 py-2 text-sm text-white placeholder:text-white/40 focus:border-white/70 focus:outline-none focus:ring-0"
+        className="h-11 w-full rounded-md border border-brand-light/70 bg-white px-4 text-sm text-brand placeholder:text-zinc-400 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/15"
       />
       <input
         name="password"
@@ -28,15 +28,15 @@ export function LoginForm() {
         placeholder="Password"
         autoComplete="current-password"
         required
-        className="border-0 border-b border-white/20 bg-transparent px-1 py-2 text-sm text-white placeholder:text-white/40 focus:border-white/70 focus:outline-none focus:ring-0"
+        className="h-11 w-full rounded-md border border-brand-light/70 bg-white px-4 text-sm text-brand placeholder:text-zinc-400 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/15"
       />
       {state?.error && (
-        <p className="text-center text-xs text-rose-300/80">{state.error}</p>
+        <p className="text-center text-xs text-red-600">{state.error}</p>
       )}
       <button
         type="submit"
         disabled={pending}
-        className="mt-2 inline-flex h-10 items-center justify-center rounded-full border border-white/30 bg-white/5 px-6 text-sm font-medium text-white/90 shadow-[0_0_40px_rgba(99,102,241,0.15)] backdrop-blur transition-colors hover:border-white/60 hover:bg-white/10 hover:text-white disabled:opacity-60"
+        className="mt-1 inline-flex h-11 items-center justify-center rounded-md bg-brand px-6 text-sm font-medium text-white shadow-[0_8px_24px_-6px_rgba(39,59,124,0.4)] transition-colors hover:bg-brand/90 disabled:opacity-60"
       >
         {pending ? "Entering…" : "Enter"}
       </button>
