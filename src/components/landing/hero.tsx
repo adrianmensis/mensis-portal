@@ -1,48 +1,25 @@
-import Image from "next/image";
 import Link from "next/link";
 
 export function Hero() {
   return (
-    <section className="relative flex min-h-screen flex-col bg-brand text-white">
-      <div className="flex items-center justify-between px-6 py-6 sm:px-10">
-        <Link href="/" className="flex items-center gap-2">
-          <Image
-            src="/isotipo.png"
-            alt="Mensis"
-            width={28}
-            height={28}
-            priority
-          />
-          <span className="text-sm font-medium tracking-wide text-white/90">
-            mensis.ai
-          </span>
-        </Link>
+    <section className="relative flex h-screen flex-col overflow-hidden bg-[radial-gradient(ellipse_at_center,_#273b7c_0%,_#121a3d_60%,_#0a1230_100%)] text-white">
+      <div className="flex flex-1 flex-col items-center justify-center gap-10 px-6 text-center">
+        <h1 className="max-w-5xl font-serif text-5xl leading-[1.05] tracking-tight sm:text-7xl">
+          You know, access and learn
+          <br className="hidden sm:block" />
+          <span className="sm:inline"> </span>things no one else does.
+        </h1>
         <Link
           href="/login"
-          className="text-sm font-medium text-white/70 transition-colors hover:text-white"
+          className="inline-flex h-11 items-center justify-center rounded-full border border-white/30 bg-white/5 px-7 text-sm font-medium text-white/90 backdrop-blur transition-colors hover:border-white/60 hover:text-white"
         >
-          Enter →
+          Enter
         </Link>
       </div>
 
-      <div className="flex flex-1 items-center">
-        <div className="mx-auto flex max-w-4xl flex-col gap-8 px-6 py-20 text-center sm:px-10">
-          <h1 className="font-serif text-5xl leading-[1.05] tracking-tight sm:text-7xl">
-            You know things
-            <br />
-            no one else does.
-          </h1>
-          <p className="font-serif text-2xl text-brand-light sm:text-3xl">
-            Knowledge never dies.
-          </p>
-        </div>
-      </div>
-
-      <div className="px-6 pb-10 text-center sm:px-10">
-        <span className="text-xs uppercase tracking-[0.25em] text-white/50">
-          Scroll
-        </span>
-      </div>
+      <p className="pb-12 text-center font-serif text-xl text-brand-light/70 sm:text-2xl">
+        Knowledge never dies.
+      </p>
     </section>
   );
 }
