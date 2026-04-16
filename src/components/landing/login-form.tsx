@@ -12,7 +12,7 @@ export function LoginForm() {
   return (
     <form
       action={action}
-      className="flex w-full max-w-sm flex-col gap-5 text-left"
+      className="flex w-full max-w-lg flex-col gap-5 text-left"
     >
       <input
         name="email"
@@ -36,7 +36,7 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={pending}
-        className="mt-3 inline-flex h-14 w-full items-center justify-center rounded-md bg-brand px-6 text-base font-medium text-white shadow-[0_10px_30px_-8px_rgba(39,59,124,0.45)] transition-colors hover:bg-brand/90 disabled:opacity-60"
+        className="mt-3 inline-flex h-14 w-full items-center justify-center rounded-lg bg-brand px-6 text-base font-medium text-white shadow-[0_10px_30px_-8px_rgba(39,59,124,0.45)] transition-colors hover:bg-brand/90 disabled:opacity-60"
       >
         {pending ? "Logging in…" : "Login"}
       </button>
