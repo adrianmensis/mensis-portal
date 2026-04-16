@@ -10,38 +10,36 @@ export function LoginForm() {
   );
 
   return (
-    <div className="w-full max-w-md rounded-2xl border border-zinc-200/80 bg-white/80 p-8 shadow-sm backdrop-blur">
-      <form
-        action={action}
-        className="flex flex-col gap-4"
+    <form
+      action={action}
+      className="flex w-full max-w-sm flex-col gap-3"
+    >
+      <input
+        name="email"
+        type="email"
+        placeholder="Email"
+        autoComplete="email"
+        required
+        className="h-12 w-full rounded-lg border border-zinc-200/80 bg-white px-4 text-sm text-zinc-800 shadow-sm placeholder:text-zinc-400 transition-all focus:border-brand/30 focus:outline-none focus:ring-4 focus:ring-brand/5"
+      />
+      <input
+        name="password"
+        type="password"
+        placeholder="Password"
+        autoComplete="current-password"
+        required
+        className="h-12 w-full rounded-lg border border-zinc-200/80 bg-white px-4 text-sm text-zinc-800 shadow-sm placeholder:text-zinc-400 transition-all focus:border-brand/30 focus:outline-none focus:ring-4 focus:ring-brand/5"
+      />
+      {state?.error && (
+        <p className="text-center text-xs text-red-500">{state.error}</p>
+      )}
+      <button
+        type="submit"
+        disabled={pending}
+        className="mt-1 h-12 w-full rounded-lg bg-brand text-sm font-medium text-white shadow-[0_4px_20px_-4px_rgba(39,59,124,0.4)] transition-all hover:bg-brand/90 hover:shadow-[0_6px_24px_-4px_rgba(39,59,124,0.5)] disabled:opacity-50"
       >
-        <input
-          name="email"
-          type="email"
-          placeholder="Enter your email"
-          autoComplete="email"
-          required
-          className="h-[52px] w-full rounded-xl border border-zinc-200 bg-zinc-50/80 px-4 text-[15px] text-zinc-800 placeholder:text-zinc-400 focus:border-brand/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand/10"
-        />
-        <input
-          name="password"
-          type="password"
-          placeholder="Password"
-          autoComplete="current-password"
-          required
-          className="h-[52px] w-full rounded-xl border border-zinc-200 bg-zinc-50/80 px-4 text-[15px] text-zinc-800 placeholder:text-zinc-400 focus:border-brand/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand/10"
-        />
-        {state?.error && (
-          <p className="text-center text-xs text-red-600">{state.error}</p>
-        )}
-        <button
-          type="submit"
-          disabled={pending}
-          className="h-[52px] w-full rounded-xl bg-brand text-[15px] font-medium text-white transition-colors hover:bg-brand/90 disabled:opacity-60"
-        >
-          {pending ? "Logging in..." : "Login"}
-        </button>
-      </form>
-    </div>
+        {pending ? "Logging in..." : "Login"}
+      </button>
+    </form>
   );
 }
