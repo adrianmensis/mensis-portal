@@ -62,7 +62,9 @@ export function ChatUI() {
         {
           id: crypto.randomUUID(),
           role: "assistant",
-          content: data.content ?? "Sorry, something went wrong.",
+          content: data.error
+            ? `Error: ${data.error}`
+            : (data.content ?? "Sorry, something went wrong."),
         },
       ]);
     } catch {
