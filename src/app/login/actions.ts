@@ -13,7 +13,7 @@ export async function login(
   const password = String(formData.get("password") ?? "");
 
   if (!email || !password) {
-    return { error: "Email y contraseña son requeridos." };
+    return { error: "Email and password are required." };
   }
 
   const supabase = await createClient();

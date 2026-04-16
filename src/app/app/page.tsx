@@ -16,20 +16,22 @@ export default async function AppHomePage() {
   return (
     <div className="flex flex-1 flex-col gap-6 bg-brand-light/30 p-8">
       <header className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight text-brand">
-          Mensis Portal
+        <h1 className="font-serif text-3xl leading-tight text-brand">
+          Mensis
         </h1>
         <form action={logout}>
           <Button variant="secondary" type="submit">
-            Salir
+            Sign out
           </Button>
         </form>
       </header>
 
       <Card>
-        <h2 className="text-lg font-medium text-brand">Bienvenido</h2>
+        <h2 className="font-serif text-2xl leading-tight text-brand">
+          Welcome.
+        </h2>
         <p className="mt-1 text-sm text-zinc-600">
-          Sesión iniciada como <span className="font-medium">{user?.email}</span>.
+          Signed in as <span className="font-medium">{user?.email}</span>.
         </p>
       </Card>
     </div>

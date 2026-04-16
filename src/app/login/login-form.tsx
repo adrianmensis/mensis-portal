@@ -24,7 +24,7 @@ export function LoginForm() {
         />
       </Field>
 
-      <Field label="Contraseña" htmlFor="password">
+      <Field label="Password" htmlFor="password">
         <Input
           id="password"
           name="password"
@@ -35,11 +35,11 @@ export function LoginForm() {
       </Field>
 
       {state?.error && (
-        <p className="text-sm text-brand-dark">{state.error}</p>
+        <p className="text-sm text-red-600">{state.error}</p>
       )}
 
       <Button type="submit" disabled={pending} className="mt-2 w-full">
-        {pending ? "Entrando..." : "Entrar"}
+        {pending ? "Signing in..." : "Sign in"}
       </Button>
     </form>
   );
