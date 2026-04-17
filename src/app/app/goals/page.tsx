@@ -12,10 +12,19 @@ const MONTH_FMT = new Intl.DateTimeFormat("en-US", {
 
 export default async function GoalsPage() {
   const supabase = await createClient();
-  const { data: goals } = await supabase
-    .from("goals")
-    .select("*")
-    .order("month", { ascending: true });
+
+  const [goalsRes, clientsRes, trialsRes, partnersRes] = await Promise.all([
+    supabase.from("goals").select("*").order("month", { ascending: true }),
+    supabase.from("clients").select("avatar_count"),
+    supabase.from("trials").select("avatar_count"),
+    supabase.from("partners").select("*", { count: "exact", head: true }),
+  ]);
+
+  const goals = goalsRes.data ?? [];
+  const currentAvatars =
+    (clientsRes.data ?? []).reduce((s, c) => s + c.avatar_count, 0) +
+    (trialsRes.data ?? []).reduce((s, t) => s + t.avatar_count, 0);
+  const currentPartners = partnersRes.count ?? 0;
 
   return (
     <div className="flex flex-col gap-6">
@@ -24,7 +33,7 @@ export default async function GoalsPage() {
           Goals
         </h1>
         <p className="mt-1 text-sm text-zinc-500">
-          Monthly avatar targets and progress.
+          Monthly avatar targets and progress. Current avatars ({currentAvatars}) calculated from clients + trials in real time.
         </p>
       </div>
 
@@ -45,17 +54,23 @@ export default async function GoalsPage() {
                 Gap
               </th>
               <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                Current Partners
+              </th>
+              <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                Target Partners
+              </th>
+              <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-zinc-500">
                 Progress
               </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-100">
-            {goals && goals.length > 0 ? (
+            {goals.length > 0 ? (
               goals.map((g) => {
-                const gap = g.target_avatars - g.current_avatars;
+                const gap = g.target_avatars - currentAvatars;
                 const pct =
                   g.target_avatars > 0
-                    ? Math.round((g.current_avatars / g.target_avatars) * 100)
+                    ? Math.round((currentAvatars / g.target_avatars) * 100)
                     : 0;
 
                 return (
@@ -63,8 +78,8 @@ export default async function GoalsPage() {
                     <td className="px-4 py-3 font-medium text-zinc-900">
                       {MONTH_FMT.format(new Date(g.month))}
                     </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-zinc-600">
-                      {g.current_avatars}
+                    <td className="px-4 py-3 text-right tabular-nums font-medium text-brand">
+                      {currentAvatars}
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums text-zinc-600">
                       {g.target_avatars}
@@ -75,6 +90,12 @@ export default async function GoalsPage() {
                       >
                         {gap > 0 ? `-${gap}` : gap === 0 ? "0" : `+${Math.abs(gap)}`}
                       </span>
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums font-medium text-brand">
+                      {currentPartners}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums text-zinc-600">
+                      {g.target_partners ?? "—"}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="ml-auto flex items-center gap-2">
@@ -95,7 +116,7 @@ export default async function GoalsPage() {
             ) : (
               <tr>
                 <td
-                  colSpan={5}
+                  colSpan={7}
                   className="px-4 py-12 text-center text-sm text-zinc-400"
                 >
                   No goals defined yet.

@@ -395,11 +395,21 @@ async function handleToolCall(
       return JSON.stringify(data ?? []);
     }
     case "query_goals": {
-      const { data } = await supabase
-        .from("goals")
-        .select("*")
-        .order("month", { ascending: true });
-      return JSON.stringify(data ?? []);
+      const [goalsRes, clientsRes, trialsRes, partnersRes] = await Promise.all([
+        supabase.from("goals").select("*").order("month", { ascending: true }),
+        supabase.from("clients").select("avatar_count"),
+        supabase.from("trials").select("avatar_count"),
+        supabase.from("partners").select("*", { count: "exact", head: true }),
+      ]);
+      const currentAvatars =
+        (clientsRes.data ?? []).reduce((s: number, c: { avatar_count: number }) => s + c.avatar_count, 0) +
+        (trialsRes.data ?? []).reduce((s: number, t: { avatar_count: number }) => s + t.avatar_count, 0);
+      const currentPartners = partnersRes.count ?? 0;
+      return JSON.stringify({
+        goals: goalsRes.data ?? [],
+        current_avatars_real: currentAvatars,
+        current_partners_real: currentPartners,
+      });
     }
     case "create_contact": {
       const { data, error } = await supabase
