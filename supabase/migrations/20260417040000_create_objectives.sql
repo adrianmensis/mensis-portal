@@ -29,8 +29,8 @@ insert into objectives (name, description, category, status, target_date, sort_o
 ('100 Partners', 'Construir red de 100 partners que revendan Mensis', 'sales', 'in_progress', '2026-12-31', 2),
 ('End-to-End Self-Service', 'Flujo completo: creación rápida de tenants, dashboard del cliente, Stripe para pagos, onboarding self-service para cualquier usuario', 'product', 'not_started', '2026-12-31', 1),
 ('Data Pipeline & AI', 'Limpieza y depuración de datos — optimizar pipeline, memory y agent. Crear proceso propio para data processing', 'product', 'not_started', '2026-12-31', 2),
-('Client Iterations', 'Implementar iteraciones y feature requests que los clientes vayan pidiendo', 'product', 'in_progress', null, 3),
+('Client Iterations', 'Implement feature requests and iterations from existing clients', 'product', 'in_progress', '2026-12-31', 3),
 ('Platform Analytics', 'Medir el uso de la plataforma para tomar decisiones — clicks, sesiones, engagement, métricas de adopción', 'product', 'not_started', '2026-12-31', 4),
 ('Knowledge Consumption Integrations', 'Integraciones para consumo del conocimiento — Claude AI, WhatsApp, Jira, Teams, Outlook (existentes), Slack', 'product', 'in_progress', '2026-12-31', 5),
 ('2+ Knowledge Sources', 'Incorporar al menos 2 fuentes de conocimiento adicionales a las llamadas', 'product', 'not_started', '2026-12-31', 6),
-('Raise Capital', 'Levantar capital de inversión (VC) para acelerar crecimiento', 'fundraising', 'not_started', null, 1);
+('Raise Capital', 'Raise $500K in VC funding. Prerequisite: reach $15K-$16K MRR to demonstrate traction', 'fundraising', 'not_started', '2026-12-31', 1);
