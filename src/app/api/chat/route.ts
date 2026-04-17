@@ -100,6 +100,64 @@ const tools: Anthropic.Tool[] = [
     },
   },
   {
+    name: "create_client",
+    description:
+      "Create a new client in the clients table. Use the company name as the 'name' field.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        name: { type: "string", description: "Company name" },
+        description: { type: "string", description: "What the company does" },
+        employee_count: { type: "number", description: "Number of employees" },
+        user_count: { type: "number", description: "Number of platform users" },
+        avatar_count: { type: "number", description: "Number of avatars/licenses" },
+        price_per_avatar: { type: "number", description: "Price per avatar in USD" },
+        country: { type: "string", description: "Country" },
+        tenant_url: { type: "string", description: "Tenant URL (e.g. company.mensismentor.com)" },
+        contact_first_name: { type: "string", description: "Contact first name" },
+        contact_last_name: { type: "string", description: "Contact last name" },
+        contact_email: { type: "string", description: "Contact email" },
+        contact_phone: { type: "string", description: "Contact phone" },
+      },
+      required: ["name"],
+    },
+  },
+  {
+    name: "create_trial",
+    description:
+      "Create a new trial/pilot in the trials table. Use the company name as the 'name' field.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        name: { type: "string", description: "Company name" },
+        description: { type: "string", description: "What the company does" },
+        employee_count: { type: "number", description: "Number of employees" },
+        user_count: { type: "number", description: "Number of platform users" },
+        avatar_count: { type: "number", description: "Number of avatars/licenses" },
+        country: { type: "string", description: "Country" },
+        tenant_url: { type: "string", description: "Tenant URL (e.g. company.mensismentor.com)" },
+        contact_first_name: { type: "string", description: "Contact first name" },
+        contact_last_name: { type: "string", description: "Contact last name" },
+        contact_email: { type: "string", description: "Contact email" },
+        contact_phone: { type: "string", description: "Contact phone" },
+      },
+      required: ["name"],
+    },
+  },
+  {
+    name: "delete_record",
+    description:
+      "Delete a record from any table (leads, clients, trials, partners). Provide the table name and the record id.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        table: { type: "string", enum: ["leads", "clients", "trials", "partners"], description: "Table to delete from" },
+        id: { type: "string", description: "UUID of the record to delete" },
+      },
+      required: ["table", "id"],
+    },
+  },
+  {
     name: "create_partner",
     description:
       "Create a confirmed partner in the partners table.",
@@ -192,7 +250,9 @@ const SYSTEM_PROMPT = `You are Mensis AI, the internal sales assistant for Mensi
 Your capabilities:
 - Query contacts, partners, trials, clients, and goals from the database using tools
 - Create new contacts or partners from pasted conversations (LinkedIn messages, emails, etc)
-- Update existing contacts, clients, and trials (price, avatars, country, etc)
+- Create and update clients, trials, contacts, and partners
+- Delete records from any table when asked
+- When the user uploads a screenshot and says "create this client/trial", extract all info and use create_client or create_trial accordingly. The 'name' field should be the COMPANY name, not the contact person's name.
 - Provide insights about pipeline (contacts/partners → trials → clients), MRR, avatars, and growth potential
 - Partners goal: 100 partners by end of 2026
 - Avatars goal: 600 avatars by end of 2026
@@ -261,6 +321,33 @@ async function handleToolCall(
         .single();
       if (error) return JSON.stringify({ error: error.message });
       return JSON.stringify(data);
+    }
+    case "create_client": {
+      const { data, error } = await supabase
+        .from("clients")
+        .insert(toolInput)
+        .select()
+        .single();
+      if (error) return JSON.stringify({ error: error.message });
+      return JSON.stringify(data);
+    }
+    case "create_trial": {
+      const { data, error } = await supabase
+        .from("trials")
+        .insert(toolInput)
+        .select()
+        .single();
+      if (error) return JSON.stringify({ error: error.message });
+      return JSON.stringify(data);
+    }
+    case "delete_record": {
+      const { table, id } = toolInput as { table: string; id: string };
+      const { error } = await supabase
+        .from(table)
+        .delete()
+        .eq("id", id);
+      if (error) return JSON.stringify({ error: error.message });
+      return JSON.stringify({ success: true, deleted: id });
     }
     case "create_partner": {
       const { data, error } = await supabase
