@@ -4,16 +4,7 @@ export const metadata = {
   title: "Roadmap · Mensis",
 };
 
-type Objective = {
-  id: string;
-  name: string;
-  description: string | null;
-  category: "sales" | "product" | "fundraising";
-  status: "not_started" | "in_progress" | "completed";
-  target_date: string | null;
-  progress: number;
-  sort_order: number;
-};
+import type { Objective } from "@/lib/types";
 
 const STATUS_STYLES: Record<string, string> = {
   not_started: "bg-zinc-50 text-zinc-500 ring-zinc-200",

@@ -1,15 +1,6 @@
-import { createClient } from "@/lib/supabase/server";
+import { withAuth } from "@/lib/api/middleware";
 
-export async function GET() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export const GET = withAuth(async (supabase) => {
   const { data, error } = await supabase
     .from("tenants")
     .select("*")
@@ -17,39 +8,22 @@ export async function GET() {
 
   if (error) return Response.json({ error: error.message }, { status: 500 });
   return Response.json(data);
-}
+});
 
-export async function POST(request: Request) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export const POST = withAuth(async (supabase, request) => {
+  const { data: { user } } = await supabase.auth.getUser();
   const body = await request.json();
   const { data, error } = await supabase
     .from("tenants")
-    .insert({ ...body, requested_by: user.email })
+    .insert({ ...body, requested_by: user!.email })
     .select()
     .single();
 
   if (error) return Response.json({ error: error.message }, { status: 500 });
   return Response.json(data);
-}
+});
 
-export async function PATCH(request: Request) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export const PATCH = withAuth(async (supabase, request) => {
   const { id, ...updates } = await request.json();
 
   if (updates.status === "completed" && !updates.completed_at) {
@@ -65,4 +39,4 @@ export async function PATCH(request: Request) {
 
   if (error) return Response.json({ error: error.message }, { status: 500 });
   return Response.json(data);
-}
+});

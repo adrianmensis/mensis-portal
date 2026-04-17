@@ -1,24 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-
-export type Client = {
-  id: string;
-  name: string;
-  description: string | null;
-  employee_count: number;
-  user_count: number;
-  avatar_count: number;
-  price_per_avatar: number;
-  country: string | null;
-  tenant_url: string | null;
-  contact_first_name: string | null;
-  contact_last_name: string | null;
-  contact_email: string | null;
-  contact_phone: string | null;
-  created_at: string;
-  updated_at: string;
-};
+import type { Client } from "@/lib/types";
 
 function fmt(n: number) {
   return new Intl.NumberFormat("en-US", {

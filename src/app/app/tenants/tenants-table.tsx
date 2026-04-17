@@ -1,32 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-
-export type Tenant = {
-  id: string;
-  name: string;
-  description: string | null;
-  acquired_licenses: number;
-  calendar_platform: string | null;
-  website: string | null;
-  meeting_platform: string | null;
-  country: string | null;
-  contact_name: string | null;
-  contact_email: string | null;
-  contact_phone: string | null;
-  employee_count: number;
-  max_mentor_sessions: number;
-  max_user_sessions: number;
-  pricing_by_user: number;
-  starknet_wallet: string | null;
-  tenant_id: string | null;
-  tenant_url: string | null;
-  status: "requested" | "in_progress" | "completed";
-  requested_by: string | null;
-  requested_at: string;
-  completed_at: string | null;
-  created_at: string;
-};
+import type { Tenant } from "@/lib/types";
 
 const STATUS_STYLES: Record<string, string> = {
   requested: "bg-amber-50 text-amber-700 ring-amber-200",

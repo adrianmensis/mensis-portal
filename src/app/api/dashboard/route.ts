@@ -1,12 +1,6 @@
-import { createClient } from "@/lib/supabase/server";
+import { withAuth } from "@/lib/api/middleware";
 
-export async function GET() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
-
+export const GET = withAuth(async (supabase) => {
   const [contactsRes, clientsRes, goalsRes] = await Promise.all([
     supabase.from("leads").select("*", { count: "exact", head: true }),
     supabase.from("clients").select("avatar_count, price_per_avatar, user_count"),
@@ -47,4 +41,4 @@ export async function GET() {
     avgPrice,
     clientCount: clients.length,
   });
-}
+});

@@ -1,12 +1,6 @@
-import { createClient } from "@/lib/supabase/server";
+import { withAuth } from "@/lib/api/middleware";
 
-export async function GET(request: Request) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
-
+export const GET = withAuth(async (supabase, request) => {
   const { searchParams } = new URL(request.url);
   const leadId = searchParams.get("lead_id");
 
@@ -16,33 +10,22 @@ export async function GET(request: Request) {
   const { data, error } = await query;
   if (error) return Response.json({ error: error.message }, { status: 500 });
   return Response.json(data);
-}
+});
 
-export async function POST(request: Request) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
-
+export const POST = withAuth(async (supabase, request) => {
+  const { data: { user } } = await supabase.auth.getUser();
   const body = await request.json();
   const { data, error } = await supabase
     .from("follow_ups")
-    .insert({ ...body, created_by: user.id })
+    .insert({ ...body, created_by: user!.id })
     .select()
     .single();
 
   if (error) return Response.json({ error: error.message }, { status: 500 });
   return Response.json(data, { status: 201 });
-}
+});
 
-export async function PATCH(request: Request) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
-
+export const PATCH = withAuth(async (supabase, request) => {
   const body = await request.json();
   const { id, ...updates } = body;
   const { data, error } = await supabase
@@ -54,4 +37,4 @@ export async function PATCH(request: Request) {
 
   if (error) return Response.json({ error: error.message }, { status: 500 });
   return Response.json(data);
-}
+});

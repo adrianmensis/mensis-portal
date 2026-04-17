@@ -1,15 +1,6 @@
-import { createClient } from "@/lib/supabase/server";
+import { withAuth } from "@/lib/api/middleware";
 
-export async function GET() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export const GET = withAuth(async (supabase) => {
   const { data } = await supabase
     .from("context")
     .select("*")
@@ -17,18 +8,9 @@ export async function GET() {
     .single();
 
   return Response.json(data ?? { content: "" });
-}
+});
 
-export async function PUT(request: Request) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export const PUT = withAuth(async (supabase, request) => {
   const { content } = await request.json();
 
   const { data: existing } = await supabase
@@ -55,4 +37,4 @@ export async function PUT(request: Request) {
     .single();
   if (error) return Response.json({ error: error.message }, { status: 500 });
   return Response.json(data);
-}
+});

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import type { Client } from "./clients-table";
+import type { Client } from "@/lib/types";
 
 function fmt(n: number) {
   return new Intl.NumberFormat("en-US", {
