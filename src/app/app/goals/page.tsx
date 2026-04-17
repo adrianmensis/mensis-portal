@@ -36,11 +36,12 @@ const CATEGORY_CONFIG: Record<string, { label: string; icon: string; color: stri
 export default async function GoalsPage() {
   const supabase = await createClient();
 
-  const [clientsRes, trialsRes, partnersRes, objectivesRes] = await Promise.all([
+  const [clientsRes, trialsRes, partnersRes, objectivesRes, goalsRes] = await Promise.all([
     supabase.from("clients").select("avatar_count"),
     supabase.from("trials").select("avatar_count"),
     supabase.from("partners").select("*", { count: "exact", head: true }),
     supabase.from("objectives").select("*").order("sort_order", { ascending: true }),
+    supabase.from("goals").select("target_avatars, target_partners").order("month", { ascending: false }).limit(1),
   ]);
 
   const clientAvatars = (clientsRes.data ?? []).reduce((s, c) => s + c.avatar_count, 0);
@@ -48,13 +49,16 @@ export default async function GoalsPage() {
   const totalAvatars = clientAvatars + trialAvatars;
   const totalPartners = partnersRes.count ?? 0;
 
+  const targetAvatars = goalsRes.data?.[0]?.target_avatars ?? 600;
+  const targetPartners = goalsRes.data?.[0]?.target_partners ?? 100;
+
   const objectives = (objectivesRes.data ?? []) as Objective[];
   const salesObjs = objectives.filter((o) => o.category === "sales");
   const productObjs = objectives.filter((o) => o.category === "product");
   const fundraisingObjs = objectives.filter((o) => o.category === "fundraising");
 
-  const avatarPct = Math.round((totalAvatars / 600) * 100);
-  const partnerPct = totalPartners > 0 ? Math.round((totalPartners / 100) * 100) : 0;
+  const avatarPct = targetAvatars > 0 ? Math.round((totalAvatars / targetAvatars) * 100) : 0;
+  const partnerPct = targetPartners > 0 ? Math.round((totalPartners / targetPartners) * 100) : 0;
 
   return (
     <div className="flex flex-col gap-8">
@@ -72,7 +76,7 @@ export default async function GoalsPage() {
         <KpiCard
           label="Avatar Goal"
           current={totalAvatars}
-          target={600}
+          target={targetAvatars}
           pct={avatarPct}
           detail={`${clientAvatars} clients + ${trialAvatars} trials`}
           color="bg-brand"
@@ -80,9 +84,9 @@ export default async function GoalsPage() {
         <KpiCard
           label="Partner Goal"
           current={totalPartners}
-          target={100}
+          target={targetPartners}
           pct={partnerPct}
-          detail={`${100 - totalPartners} partners remaining`}
+          detail={`${targetPartners - totalPartners} partners remaining`}
           color="bg-violet-500"
         />
       </div>
