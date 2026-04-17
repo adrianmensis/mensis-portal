@@ -48,7 +48,7 @@ export default async function GoalsPage() {
   const productObjs = objectives.filter((o) => o.category === "product");
   const fundraisingObjs = objectives.filter((o) => o.category === "fundraising");
 
-  const avatarPct = targetAvatars > 0 ? Math.round((totalAvatars / targetAvatars) * 100) : 0;
+  const avatarPct = targetAvatars > 0 ? Math.round((clientAvatars / targetAvatars) * 100) : 0;
   const partnerPct = targetPartners > 0 ? Math.round((totalPartners / targetPartners) * 100) : 0;
 
   return (
@@ -66,10 +66,10 @@ export default async function GoalsPage() {
       <div className="grid gap-4 sm:grid-cols-2">
         <KpiCard
           label="Avatar Goal"
-          current={totalAvatars}
+          current={clientAvatars}
           target={targetAvatars}
           pct={avatarPct}
-          detail={`${clientAvatars} clients + ${trialAvatars} trials`}
+          detail={`${trialAvatars} avatars in pipeline (trials)`}
           color="bg-brand"
         />
         <KpiCard
@@ -81,6 +81,14 @@ export default async function GoalsPage() {
           color="bg-violet-500"
         />
       </div>
+
+      {/* Monthly Breakdown */}
+      <MonthlyBreakdown
+        currentAvatars={clientAvatars}
+        targetAvatars={targetAvatars}
+        currentPartners={totalPartners}
+        targetPartners={targetPartners}
+      />
 
       {/* Objectives by Category */}
       <ObjectiveSection
@@ -94,6 +102,13 @@ export default async function GoalsPage() {
         objectives={salesObjs}
         liveData={{ "600 Avatars": avatarPct, "100 Partners": partnerPct }}
       />
+
+      {/* Pipeline note */}
+      <div className="rounded-lg border border-dashed border-zinc-200 bg-zinc-50/50 px-5 py-3">
+        <p className="text-xs text-zinc-500">
+          <span className="font-medium text-zinc-700">{trialAvatars} avatars in pipeline</span> — from {(trialsRes.data ?? []).length} active trials. These are not counted toward the avatar goal until converted to paying clients.
+        </p>
+      </div>
 
       <ObjectiveSection
         title="Product"
@@ -240,6 +255,89 @@ function ObjectiveSection({
             </div>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+const MONTHS = ["May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+function MonthlyBreakdown({
+  currentAvatars,
+  targetAvatars,
+  currentPartners,
+  targetPartners,
+}: {
+  currentAvatars: number;
+  targetAvatars: number;
+  currentPartners: number;
+  targetPartners: number;
+}) {
+  const remainingAvatars = Math.max(0, targetAvatars - currentAvatars);
+  const remainingPartners = Math.max(0, targetPartners - currentPartners);
+  const monthsLeft = MONTHS.length;
+  const avatarsPerMonth = Math.ceil(remainingAvatars / monthsLeft);
+  const partnersPerMonth = Math.ceil(remainingPartners / monthsLeft);
+
+  return (
+    <div className="rounded-xl border border-zinc-200 bg-white">
+      <div className="flex items-center justify-between border-b border-zinc-100 px-5 py-4">
+        <div className="flex items-center gap-3">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+          </svg>
+          <h2 className="text-base font-semibold text-zinc-900">Monthly Targets</h2>
+        </div>
+        <p className="text-xs text-zinc-400">
+          {monthsLeft} months remaining (May–Dec 2026)
+        </p>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-zinc-50 bg-zinc-50/50">
+              <th className="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-zinc-400">Month</th>
+              <th className="px-4 py-2.5 text-right text-xs font-semibold uppercase tracking-wide text-zinc-400">Avatars Needed</th>
+              <th className="px-4 py-2.5 text-right text-xs font-semibold uppercase tracking-wide text-zinc-400">Cumulative</th>
+              <th className="px-4 py-2.5 text-right text-xs font-semibold uppercase tracking-wide text-zinc-400">Partners Needed</th>
+              <th className="px-4 py-2.5 text-right text-xs font-semibold uppercase tracking-wide text-zinc-400">Cumulative</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-zinc-50">
+            {MONTHS.map((month, i) => {
+              const avatarsCumulative = currentAvatars + avatarsPerMonth * (i + 1);
+              const partnersCumulative = currentPartners + partnersPerMonth * (i + 1);
+
+              return (
+                <tr key={month} className="transition-colors hover:bg-blue-50/30">
+                  <td className="px-4 py-2.5 font-medium text-zinc-800">{month} 2026</td>
+                  <td className="px-4 py-2.5 text-right tabular-nums font-medium text-brand">
+                    +{avatarsPerMonth}
+                  </td>
+                  <td className="px-4 py-2.5 text-right tabular-nums text-zinc-500">
+                    {Math.min(avatarsCumulative, targetAvatars)}
+                  </td>
+                  <td className="px-4 py-2.5 text-right tabular-nums font-medium text-violet-600">
+                    +{partnersPerMonth}
+                  </td>
+                  <td className="px-4 py-2.5 text-right tabular-nums text-zinc-500">
+                    {Math.min(partnersCumulative, targetPartners)}
+                  </td>
+                </tr>
+              );
+            })}
+            <tr className="bg-zinc-50/80 font-semibold">
+              <td className="px-4 py-2.5 text-zinc-900">Target</td>
+              <td className="px-4 py-2.5 text-right tabular-nums text-brand">+{remainingAvatars}</td>
+              <td className="px-4 py-2.5 text-right tabular-nums text-zinc-900">{targetAvatars}</td>
+              <td className="px-4 py-2.5 text-right tabular-nums text-violet-600">+{remainingPartners}</td>
+              <td className="px-4 py-2.5 text-right tabular-nums text-zinc-900">{targetPartners}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   );
