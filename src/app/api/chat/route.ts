@@ -55,6 +55,61 @@ const tools: Anthropic.Tool[] = [
     },
   },
   {
+    name: "query_tenants",
+    description:
+      "Query all tenant requests. Returns name, status (requested/in_progress/completed), tenant_id, tenant_url, country, licenses, etc.",
+    input_schema: {
+      type: "object" as const,
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: "create_tenant_request",
+    description:
+      "Create a new tenant provisioning request for the dev team. Extract info from text/screenshots the user provides.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        name: { type: "string", description: "Company/tenant name" },
+        description: { type: "string", description: "Company description" },
+        acquired_licenses: { type: "number", description: "Number of licenses/avatars" },
+        calendar_platform: { type: "string", description: "Calendar platform (Google Calendar, Outlook Calendar)" },
+        website: { type: "string", description: "Company website" },
+        meeting_platform: { type: "string", description: "Meeting platform (Google Meet, Microsoft Teams, Zoom)" },
+        country: { type: "string", description: "Country" },
+        contact_name: { type: "string", description: "Contact person name" },
+        contact_email: { type: "string", description: "Contact email" },
+        contact_phone: { type: "string", description: "Contact phone" },
+        employee_count: { type: "number", description: "Number of employees" },
+        max_mentor_sessions: { type: "number", description: "Max mentor sessions" },
+        max_user_sessions: { type: "number", description: "Max user sessions" },
+        pricing_by_user: { type: "number", description: "Price per user" },
+      },
+      required: ["name"],
+    },
+  },
+  {
+    name: "update_tenant",
+    description:
+      "Update an existing tenant request. Can update status, tenant_id, tenant_url, starknet_wallet, etc.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        id: { type: "string", description: "UUID of the tenant to update" },
+        status: { type: "string", enum: ["requested", "in_progress", "completed"] },
+        tenant_id: { type: "string" },
+        tenant_url: { type: "string" },
+        starknet_wallet: { type: "string" },
+        name: { type: "string" },
+        description: { type: "string" },
+        acquired_licenses: { type: "number" },
+        employee_count: { type: "number" },
+      },
+      required: ["id"],
+    },
+  },
+  {
     name: "create_contact",
     description:
       "Create a new contact/lead in the database. Extract info from conversations the user pastes (LinkedIn, email, etc).",
@@ -250,7 +305,8 @@ const SYSTEM_PROMPT = `You are Mensis AI, the internal sales assistant for Mensi
 Your capabilities:
 - Query contacts, partners, trials, clients, and goals from the database using tools
 - Create new contacts or partners from pasted conversations (LinkedIn messages, emails, etc)
-- Create and update clients, trials, contacts, and partners
+- Create and update clients, trials, contacts, partners, and tenant requests
+- Create tenant provisioning requests for the dev team (extract info from text/screenshots)
 - Delete records from any table when asked
 - When the user uploads a screenshot and says "create this client/trial", extract all info and use create_client or create_trial accordingly. The 'name' field should be the COMPANY name, not the contact person's name.
 - Provide insights about pipeline (contacts/partners → trials → clients), MRR, avatars, and growth potential
@@ -317,6 +373,36 @@ async function handleToolCall(
       const { data, error } = await supabase
         .from("leads")
         .insert(toolInput)
+        .select()
+        .single();
+      if (error) return JSON.stringify({ error: error.message });
+      return JSON.stringify(data);
+    }
+    case "query_tenants": {
+      const { data } = await supabase
+        .from("tenants")
+        .select("*")
+        .order("created_at", { ascending: false });
+      return JSON.stringify(data ?? []);
+    }
+    case "create_tenant_request": {
+      const { data, error } = await supabase
+        .from("tenants")
+        .insert(toolInput)
+        .select()
+        .single();
+      if (error) return JSON.stringify({ error: error.message });
+      return JSON.stringify(data);
+    }
+    case "update_tenant": {
+      const { id, ...updates } = toolInput as { id: string; [key: string]: unknown };
+      if (updates.status === "completed") {
+        updates.completed_at = new Date().toISOString();
+      }
+      const { data, error } = await supabase
+        .from("tenants")
+        .update(updates)
+        .eq("id", id)
         .select()
         .single();
       if (error) return JSON.stringify({ error: error.message });
