@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = {
-  title: "Goals · Mensis",
+  title: "Roadmap · Mensis",
 };
 
 type Objective = {
@@ -64,7 +64,7 @@ export default async function GoalsPage() {
     <div className="flex flex-col gap-8">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">
-          Goals
+          Roadmap
         </h1>
         <p className="mt-1 text-sm text-zinc-500">
           2026 strategic objectives — sales, product, and fundraising.
