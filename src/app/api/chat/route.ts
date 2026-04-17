@@ -55,6 +55,38 @@ const tools: Anthropic.Tool[] = [
     },
   },
   {
+    name: "create_goal",
+    description:
+      "Create a new monthly goal. Provide month as YYYY-MM-01 format.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        month: { type: "string", description: "Month in YYYY-MM-01 format (e.g. 2026-05-01)" },
+        current_avatars: { type: "number", description: "Current number of avatars" },
+        target_avatars: { type: "number", description: "Target number of avatars" },
+        target_partners: { type: "number", description: "Target number of partners" },
+        current_partners: { type: "number", description: "Current number of partners" },
+      },
+      required: ["month", "target_avatars"],
+    },
+  },
+  {
+    name: "update_goal",
+    description:
+      "Update an existing goal. Provide the goal id and fields to update.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        id: { type: "string", description: "UUID of the goal to update" },
+        current_avatars: { type: "number" },
+        target_avatars: { type: "number" },
+        target_partners: { type: "number" },
+        current_partners: { type: "number" },
+      },
+      required: ["id"],
+    },
+  },
+  {
     name: "query_tenants",
     description:
       "Query all tenant requests. Returns name, status (requested/in_progress/completed), tenant_id, tenant_url, country, licenses, etc.",
@@ -373,6 +405,26 @@ async function handleToolCall(
       const { data, error } = await supabase
         .from("leads")
         .insert(toolInput)
+        .select()
+        .single();
+      if (error) return JSON.stringify({ error: error.message });
+      return JSON.stringify(data);
+    }
+    case "create_goal": {
+      const { data, error } = await supabase
+        .from("goals")
+        .insert(toolInput)
+        .select()
+        .single();
+      if (error) return JSON.stringify({ error: error.message });
+      return JSON.stringify(data);
+    }
+    case "update_goal": {
+      const { id, ...updates } = toolInput as { id: string; [key: string]: unknown };
+      const { data, error } = await supabase
+        .from("goals")
+        .update(updates)
+        .eq("id", id)
         .select()
         .single();
       if (error) return JSON.stringify({ error: error.message });
