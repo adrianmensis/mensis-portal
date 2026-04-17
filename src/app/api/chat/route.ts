@@ -87,6 +87,50 @@ const tools: Anthropic.Tool[] = [
     },
   },
   {
+    name: "query_objectives",
+    description:
+      "Query all strategic objectives/goals. Returns name, description, category (sales/product/fundraising), status (not_started/in_progress/completed), progress, target_date.",
+    input_schema: {
+      type: "object" as const,
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: "create_objective",
+    description:
+      "Create a new strategic objective/goal.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        name: { type: "string", description: "Objective name" },
+        description: { type: "string", description: "What this objective entails" },
+        category: { type: "string", enum: ["sales", "product", "fundraising"], description: "Category" },
+        status: { type: "string", enum: ["not_started", "in_progress", "completed"] },
+        target_date: { type: "string", description: "Target date YYYY-MM-DD" },
+        progress: { type: "number", description: "Progress percentage 0-100" },
+      },
+      required: ["name", "category"],
+    },
+  },
+  {
+    name: "update_objective",
+    description:
+      "Update an existing objective. Provide the id and fields to update.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        id: { type: "string", description: "UUID of the objective" },
+        name: { type: "string" },
+        description: { type: "string" },
+        status: { type: "string", enum: ["not_started", "in_progress", "completed"] },
+        progress: { type: "number" },
+        target_date: { type: "string" },
+      },
+      required: ["id"],
+    },
+  },
+  {
     name: "query_tenants",
     description:
       "Query all tenant requests. Returns name, status (requested/in_progress/completed), tenant_id, tenant_url, country, licenses, etc.",
@@ -433,6 +477,33 @@ async function handleToolCall(
       const { id, ...updates } = toolInput as { id: string; [key: string]: unknown };
       const { data, error } = await supabase
         .from("goals")
+        .update(updates)
+        .eq("id", id)
+        .select()
+        .single();
+      if (error) return JSON.stringify({ error: error.message });
+      return JSON.stringify(data);
+    }
+    case "query_objectives": {
+      const { data } = await supabase
+        .from("objectives")
+        .select("*")
+        .order("sort_order", { ascending: true });
+      return JSON.stringify(data ?? []);
+    }
+    case "create_objective": {
+      const { data, error } = await supabase
+        .from("objectives")
+        .insert(toolInput)
+        .select()
+        .single();
+      if (error) return JSON.stringify({ error: error.message });
+      return JSON.stringify(data);
+    }
+    case "update_objective": {
+      const { id, ...updates } = toolInput as { id: string; [key: string]: unknown };
+      const { data, error } = await supabase
+        .from("objectives")
         .update(updates)
         .eq("id", id)
         .select()
