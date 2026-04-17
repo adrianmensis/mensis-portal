@@ -416,6 +416,16 @@ export async function POST(request: Request) {
 
     const { messages } = await request.json();
 
+    const { data: contextData } = await supabase
+      .from("context")
+      .select("content")
+      .limit(1)
+      .single();
+
+    const businessContext = contextData?.content
+      ? `\n\n## Business Context (provided by the team):\n${contextData.content}`
+      : "";
+
     const anthropicMessages: Anthropic.MessageParam[] = messages.map(
       (m: { role: string; content: string | Anthropic.ContentBlockParam[] }) => ({
         role: m.role as "user" | "assistant",
@@ -426,7 +436,7 @@ export async function POST(request: Request) {
     let response = await anthropic.messages.create({
       model: "claude-sonnet-4-20250514",
       max_tokens: 1024,
-      system: SYSTEM_PROMPT,
+      system: SYSTEM_PROMPT + businessContext,
       tools,
       messages: anthropicMessages,
     });
@@ -456,7 +466,7 @@ export async function POST(request: Request) {
       response = await anthropic.messages.create({
         model: "claude-sonnet-4-20250514",
         max_tokens: 1024,
-        system: SYSTEM_PROMPT,
+        system: SYSTEM_PROMPT + businessContext,
         tools,
         messages: anthropicMessages,
       });
