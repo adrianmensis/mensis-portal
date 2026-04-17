@@ -28,16 +28,19 @@ export default async function GoalsPage() {
   const supabase = await createClient();
 
   const [clientsRes, trialsRes, partnersRes, objectivesRes, goalsRes] = await Promise.all([
-    supabase.from("clients").select("avatar_count"),
-    supabase.from("trials").select("avatar_count"),
+    supabase.from("clients").select("avatar_count, user_count"),
+    supabase.from("trials").select("avatar_count, user_count"),
     supabase.from("partners").select("*", { count: "exact", head: true }),
     supabase.from("objectives").select("*").order("sort_order", { ascending: true }),
     supabase.from("goals").select("target_avatars, target_partners").order("month", { ascending: false }).limit(1),
   ]);
 
-  const clientAvatars = (clientsRes.data ?? []).reduce((s, c) => s + c.avatar_count, 0);
-  const trialAvatars = (trialsRes.data ?? []).reduce((s, t) => s + t.avatar_count, 0);
-  const totalAvatars = clientAvatars + trialAvatars;
+  const clientsData = clientsRes.data ?? [];
+  const trialsData = trialsRes.data ?? [];
+  const clientAvatars = clientsData.reduce((s, c) => s + c.avatar_count, 0);
+  const trialAvatars = trialsData.reduce((s, t) => s + t.avatar_count, 0);
+  const clientUsers = clientsData.reduce((s, c) => s + c.user_count, 0);
+  const trialUsers = trialsData.reduce((s, t) => s + t.user_count, 0);
   const totalPartners = partnersRes.count ?? 0;
 
   const targetAvatars = goalsRes.data?.[0]?.target_avatars ?? 600;
@@ -63,7 +66,7 @@ export default async function GoalsPage() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-3">
         <KpiCard
           label="Avatar Goal"
           current={clientAvatars}
@@ -80,6 +83,13 @@ export default async function GoalsPage() {
           detail={`${targetPartners - totalPartners} partners remaining`}
           color="bg-violet-500"
         />
+        <div className="rounded-xl border border-zinc-200 bg-white p-5">
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">Platform Users</p>
+          <p className="mt-3 text-3xl font-bold text-zinc-900">{clientUsers.toLocaleString()}</p>
+          <p className="mt-2 text-xs text-zinc-400">
+            {trialUsers.toLocaleString()} in pipeline (trials)
+          </p>
+        </div>
       </div>
 
       {/* Monthly Breakdown */}
@@ -100,13 +110,13 @@ export default async function GoalsPage() {
           </svg>
         }
         objectives={salesObjs}
-        liveData={{ "600 Avatars": avatarPct, "100 Partners": partnerPct }}
+        liveData={{ "500 Avatars": avatarPct, "30 Partners": partnerPct }}
       />
 
       {/* Pipeline note */}
       <div className="rounded-lg border border-dashed border-zinc-200 bg-zinc-50/50 px-5 py-3">
         <p className="text-xs text-zinc-500">
-          <span className="font-medium text-zinc-700">{trialAvatars} avatars in pipeline</span> — from {(trialsRes.data ?? []).length} active trials. These are not counted toward the avatar goal until converted to paying clients.
+          <span className="font-medium text-zinc-700">{trialAvatars} avatars in pipeline</span> — from {trialsData.length} active trials ({trialUsers} users). Not counted toward the avatar goal until converted to paying clients.
         </p>
       </div>
 
