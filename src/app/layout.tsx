@@ -16,9 +16,6 @@ const instrumentSerif = Instrument_Serif({
 export const metadata: Metadata = {
   title: "Mensis Partner Portal",
   description: "Mensis Partner Portal",
-  icons: {
-    icon: "/isotipo.png",
-  },
 };
 
 export default function RootLayout({

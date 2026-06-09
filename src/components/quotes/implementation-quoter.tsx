@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { fmtCurrency } from "@/lib/format";
-import { commission, COMMISSION_RATE } from "@/lib/pricing";
 import { NumberField } from "@/components/ui/number-field";
 import { InfoTooltip } from "@/components/ui/tooltip";
 
@@ -128,10 +127,9 @@ export function ImplementationQuoter() {
           <span className="text-sm text-zinc-500">Total implementación</span>
           <span className="text-3xl font-bold text-brand">{fmtCurrency(total)}</span>
         </div>
-        <div className="flex items-baseline justify-between rounded-lg bg-brand/8 px-3 py-2">
-          <span className="text-xs font-semibold text-brand">Tu comisión ({COMMISSION_RATE * 100}%)</span>
-          <span className="text-lg font-bold text-brand">{fmtCurrency(commission(total))}</span>
-        </div>
+        <p className="rounded-lg bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">
+          100% es tu ganancia — la implementación no tiene comisión Mensis.
+        </p>
         <div className="mt-2 flex flex-col gap-1 text-xs text-zinc-500">
           <div className="flex justify-between"><span>Usuarios</span><span>{usuarios.toLocaleString()}</span></div>
           <div className="flex justify-between"><span>Tarifa consultor</span><span>{fmtCurrency(rate)}/h</span></div>

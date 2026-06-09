@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-import { logout } from "../login/actions";
+import { UserMenu } from "./user-menu";
 import type { Role } from "@/lib/types";
 
 type NavItem = { label: string; href: string; icon: React.ReactNode };
@@ -93,15 +93,11 @@ export function Sidebar({
   }
 
   const items = NAV[role];
-  const displayName =
-    fullName ??
-    email?.split("@")[0]?.replace(/\./g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) ??
-    "User";
 
   return (
     <div className="relative">
       <aside
-        className={`sticky top-0 flex h-screen shrink-0 flex-col border-r border-zinc-200/80 bg-white transition-all duration-200 ${
+        className={`sticky top-0 flex h-screen shrink-0 flex-col border-r border-zinc-200/70 bg-gradient-to-b from-[#f7f9fd] to-[#eef1f7] transition-all duration-200 ${
           collapsed ? "w-[68px]" : "w-[240px]"
         }`}
       >
@@ -154,36 +150,8 @@ export function Sidebar({
           })}
         </nav>
 
-        <div className="flex flex-col gap-1 border-t border-zinc-100 px-3 py-4">
-          <Link
-            href="/app/profile"
-            className={`flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors ${
-              pathname.startsWith("/app/profile") ? "bg-brand/8" : "hover:bg-zinc-50"
-            } ${collapsed ? "justify-center" : ""}`}
-          >
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand text-xs font-bold text-white">
-              {email ? email[0].toUpperCase() : "?"}
-            </span>
-            {!collapsed && (
-              <span className="flex min-w-0 flex-col text-left">
-                <span className="truncate text-[13px] font-medium text-zinc-700">{displayName}</span>
-                <span className="truncate text-[11px] text-zinc-400">{email ?? ""}</span>
-              </span>
-            )}
-          </Link>
-          <form action={logout}>
-            <button
-              type="submit"
-              className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-zinc-400 transition-colors hover:bg-zinc-50 hover:text-zinc-700 ${
-                collapsed ? "justify-center" : ""
-              }`}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" />
-              </svg>
-              {!collapsed && "Cerrar sesión"}
-            </button>
-          </form>
+        <div className="border-t border-zinc-200/60 px-3 py-4">
+          <UserMenu email={email} fullName={fullName} collapsed={collapsed} />
         </div>
       </aside>
 

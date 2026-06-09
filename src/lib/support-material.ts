@@ -41,6 +41,12 @@ export const ACADEMY: AcademyPlaylist[] = [
     playlistId: "PLqh3nKzRgK1uYoBWkb_3W9S6J3-wGWerP",
     videos: [
       { youtubeId: "wDUwtrOEN4s", title: "Módulo #1: Configuración de la Empresa ⚙️" },
+      { youtubeId: "vzmjnJiAiBY", title: "Módulo #2: Configuración Cuenta Admin" },
+      { youtubeId: "LOpl-x0_W80", title: "Módulo #3: Gestión y Creación de Usuarios 👥" },
+      { youtubeId: "AeJwSwR1e7A", title: "Módulo #4: Documentos como Fuente de Conocimiento" },
+      { youtubeId: "heXVvSonAPU", title: "Módulo #5: Levantamiento de Experiencias 🚀" },
+      { youtubeId: "r20clvrStRk", title: "Módulo #6: Creación de Rutas de Aprendizaje 📚" },
+      { youtubeId: "cV8ghuAFcKA", title: "Módulo #7: Funcionalidades 🛠️ y Beneficios 💡" },
     ],
   },
   {

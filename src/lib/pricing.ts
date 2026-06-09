@@ -9,3 +9,8 @@ export function avatarAmount(avatars: number | null | undefined) {
 export function commission(amount: number) {
   return amount * COMMISSION_RATE;
 }
+
+// Annual partner commission on a license: 20% of each month's amount × 12.
+export function annualCommission(avatars: number | null | undefined) {
+  return avatarAmount(avatars) * COMMISSION_RATE * 12;
+}

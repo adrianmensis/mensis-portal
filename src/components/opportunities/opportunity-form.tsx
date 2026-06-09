@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { api } from "@/lib/api/client";
 import { fmtCurrency } from "@/lib/format";
-import { AVATAR_PRICE, COMMISSION_RATE, avatarAmount, commission } from "@/lib/pricing";
+import { AVATAR_PRICE, COMMISSION_RATE, avatarAmount, annualCommission } from "@/lib/pricing";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { TextField } from "@/components/ui/text-field";
@@ -24,8 +24,8 @@ export function OpportunityForm({
   const [avatars, setAvatars] = useState(0);
   const [collaborators, setCollaborators] = useState(0);
 
-  const monto = avatarAmount(avatars);
-  const comision = commission(monto);
+  const montoAnual = avatarAmount(avatars) * 12;
+  const comisionAnual = annualCommission(avatars);
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -71,19 +71,19 @@ export function OpportunityForm({
         </div>
       </div>
 
-      {/* Live earnings preview */}
+      {/* Live earnings preview (annual) */}
       <div className="grid gap-4 rounded-2xl border border-brand/15 bg-brand/[0.03] p-5 sm:grid-cols-3">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">Avatares × ${AVATAR_PRICE}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">Avatares × ${AVATAR_PRICE}/mes</p>
           <p className="mt-1 text-xl font-bold text-zinc-900">{avatars}</p>
         </div>
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">Monto total</p>
-          <p className="mt-1 text-xl font-bold text-zinc-900">{fmtCurrency(monto)}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">Monto anual</p>
+          <p className="mt-1 text-xl font-bold text-zinc-900">{fmtCurrency(montoAnual)}</p>
         </div>
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-brand">Tu comisión ({COMMISSION_RATE * 100}%)</p>
-          <p className="mt-1 text-xl font-bold text-brand">{fmtCurrency(comision)}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-brand">Tu comisión anual ({COMMISSION_RATE * 100}%)</p>
+          <p className="mt-1 text-xl font-bold text-brand">{fmtCurrency(comisionAnual)}</p>
         </div>
       </div>
 

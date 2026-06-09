@@ -3,7 +3,7 @@
 import { api } from "@/lib/api/client";
 import { useResource } from "@/lib/api/use-resource";
 import { fmtCurrency } from "@/lib/format";
-import { avatarAmount, commission, COMMISSION_RATE } from "@/lib/pricing";
+import { avatarAmount, annualCommission, COMMISSION_RATE } from "@/lib/pricing";
 import { PageHeader } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingRow } from "@/components/ui/spinner";
@@ -24,7 +24,7 @@ export function OpportunitiesTable({ title = "Mis oportunidades" }: { title?: st
   const { data: opps, loading, error, reload } = useResource(() => api.opportunities.list());
 
   const totalComision = (opps ?? []).reduce(
-    (s, o) => s + commission(avatarAmount(o.estimated_avatars)),
+    (s, o) => s + annualCommission(o.estimated_avatars),
     0,
   );
 
@@ -57,35 +57,32 @@ export function OpportunitiesTable({ title = "Mis oportunidades" }: { title?: st
             <Th>Web site</Th>
             <Th>Colaboradores</Th>
             <Th>Avatares</Th>
-            <Th>Monto</Th>
-            <Th>Comisión ({COMMISSION_RATE * 100}%)</Th>
+            <Th>Monto anual</Th>
+            <Th>Comisión anual ({COMMISSION_RATE * 100}%)</Th>
             <Th>Estado</Th>
           </THead>
           <TBody>
-            {opps.map((o) => {
-              const monto = avatarAmount(o.estimated_avatars);
-              return (
-                <Tr key={o.id}>
-                  <Td className="font-medium text-zinc-800">{o.client_name}</Td>
-                  <Td>
-                    {o.website ? (
-                      <a href={o.website} target="_blank" rel="noreferrer" className="text-brand hover:underline">
-                        {hostname(o.website)}
-                      </a>
-                    ) : (
-                      <span className="text-zinc-400">—</span>
-                    )}
-                  </Td>
-                  <Td className="text-zinc-500">{o.collaborators ?? "—"}</Td>
-                  <Td className="text-zinc-500">{o.estimated_avatars ?? "—"}</Td>
-                  <Td className="text-zinc-600">{fmtCurrency(monto)}</Td>
-                  <Td className="font-semibold text-brand">{fmtCurrency(commission(monto))}</Td>
-                  <Td>
-                    <StatusBadge status={o.status} />
-                  </Td>
-                </Tr>
-              );
-            })}
+            {opps.map((o) => (
+              <Tr key={o.id}>
+                <Td className="font-medium text-zinc-800">{o.client_name}</Td>
+                <Td>
+                  {o.website ? (
+                    <a href={o.website} target="_blank" rel="noreferrer" className="text-brand hover:underline">
+                      {hostname(o.website)}
+                    </a>
+                  ) : (
+                    <span className="text-zinc-400">—</span>
+                  )}
+                </Td>
+                <Td className="text-zinc-500">{o.collaborators ?? "—"}</Td>
+                <Td className="text-zinc-500">{o.estimated_avatars ?? "—"}</Td>
+                <Td className="text-zinc-600">{fmtCurrency(avatarAmount(o.estimated_avatars) * 12)}</Td>
+                <Td className="font-semibold text-brand">{fmtCurrency(annualCommission(o.estimated_avatars))}</Td>
+                <Td>
+                  <StatusBadge status={o.status} />
+                </Td>
+              </Tr>
+            ))}
           </TBody>
         </Table>
       )}
