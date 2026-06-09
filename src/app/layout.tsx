@@ -14,9 +14,8 @@ const instrumentSerif = Instrument_Serif({
 });
 
 export const metadata: Metadata = {
-  title: "Mensis — Knowledge never dies.",
-  description:
-    "You know things no one else does. Mensis preserves expertise as living avatars.",
+  title: "Mensis Partner Portal",
+  description: "Mensis Partner Portal",
   icons: {
     icon: "/isotipo.png",
   },

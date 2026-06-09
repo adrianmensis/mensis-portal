@@ -1,16 +1,9 @@
-import { createClient } from "@/lib/supabase/server";
-import { PartnersTable } from "./partners-table";
+import { requireAdmin } from "@/lib/auth/profile";
+import { PartnersManager } from "@/components/partners/partners-manager";
 
-export const metadata = {
-  title: "Partners · Mensis",
-};
+export const metadata = { title: "Partners · Mensis Partner Portal" };
 
 export default async function PartnersPage() {
-  const supabase = await createClient();
-  const { data: partners } = await supabase
-    .from("partners")
-    .select("*")
-    .order("created_at", { ascending: false });
-
-  return <PartnersTable partners={partners ?? []} />;
+  await requireAdmin();
+  return <PartnersManager />;
 }

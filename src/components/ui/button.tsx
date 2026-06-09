@@ -7,12 +7,13 @@ type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const base =
-  "inline-flex h-10 items-center justify-center rounded-md px-4 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60";
+  "inline-flex h-11 items-center justify-center rounded-xl px-5 text-sm font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-60";
 
 const variants: Record<Variant, string> = {
-  primary: "bg-brand text-white hover:bg-brand/90",
+  primary:
+    "bg-brand text-white shadow-[0_4px_16px_-4px_rgba(39,59,124,0.4)] hover:bg-brand/90 hover:shadow-[0_6px_20px_-4px_rgba(39,59,124,0.5)]",
   secondary:
-    "border border-brand-light bg-white text-brand hover:bg-brand-light/30",
+    "border border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50",
 };
 
 export function Button({ variant = "primary", className = "", ...rest }: Props) {
