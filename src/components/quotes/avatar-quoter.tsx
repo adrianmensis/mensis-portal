@@ -5,6 +5,8 @@ import { fmtCurrency } from "@/lib/format";
 import { commission, COMMISSION_RATE } from "@/lib/pricing";
 import { Label } from "@/components/ui/label";
 import { NumberField } from "@/components/ui/number-field";
+import { QuoteDownload } from "./quote-download";
+import type { QuoteClient } from "@/lib/quote-print";
 
 const ANNUAL_DISCOUNT = 0.1; // 10% off when billed annually.
 const DEFAULT_PRICE = 40; // standard price per avatar / month (USD).
@@ -24,7 +26,31 @@ export function AvatarQuoter() {
   const comisionMensual = commission(monthly);
   const comisionAnual = comisionMensual * 12;
 
+  const buildDoc = (client: QuoteClient) => ({
+    kind: "Licenciamiento",
+    client,
+    lines: [
+      {
+        label: "Licenciamiento de avatares",
+        sub: `${avatars} avatar${avatars === 1 ? "" : "es"} × ${fmtCurrency(price)}/mes`,
+        value: `${fmtCurrency(monthly)}/mes`,
+      },
+      ...(annual
+        ? [{ label: "Descuento facturación anual (−10%)", value: `−${fmtCurrency(savings)}` }]
+        : []),
+    ],
+    totals: [
+      { label: "Total mensual", value: fmtCurrency(monthly) },
+      { label: annual ? "Total anual (−10%)" : "Total anual", value: fmtCurrency(annualTotal), strong: true },
+    ],
+    note:
+      `Usuarios (seats): ${users.toLocaleString()}. ` +
+      `Tu comisión (${COMMISSION_RATE * 100}%/mes): ${fmtCurrency(comisionMensual)}/mes × 12 = ${fmtCurrency(comisionAnual)} al año. ` +
+      `Precio estándar $${DEFAULT_PRICE}/avatar/mes, ajustable según acuerdo comercial.`,
+  });
+
   return (
+    <div className="flex flex-col gap-6">
     <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
       <div className="flex flex-col gap-5 rounded-2xl border border-zinc-200 bg-white p-6">
         <div className="grid gap-5 sm:grid-cols-2">
@@ -85,6 +111,9 @@ export function AvatarQuoter() {
           <div className="flex justify-between"><span>Precio / avatar</span><span>{fmtCurrency(price)}/mes</span></div>
         </div>
       </div>
+    </div>
+
+      <QuoteDownload build={buildDoc} />
     </div>
   );
 }

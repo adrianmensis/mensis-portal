@@ -44,6 +44,18 @@ export type Opportunity = {
   updated_at: string;
 };
 
+export type Material = {
+  id: string;
+  title: string;
+  description: string | null;
+  file_path: string;
+  file_name: string;
+  mime_type: string | null;
+  size_bytes: number | null;
+  uploaded_by: string | null;
+  created_at: string;
+};
+
 export const STATUS_LABELS: Record<OpportunityStatus, string> = {
   pending: "Pending",
   approved: "Approved",

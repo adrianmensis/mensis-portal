@@ -1,4 +1,4 @@
-import type { Opportunity, OpportunityStatus, Profile } from "@/lib/types";
+import type { Material, Opportunity, OpportunityStatus, Profile } from "@/lib/types";
 import type { PartnerWithCount, CreatePartnerInput } from "@/lib/services/partners";
 import type { OpportunityWithPartner, CreateOpportunityInput, OpportunityFilters } from "@/lib/services/opportunities";
 import type { DashboardData } from "@/lib/services/dashboard";
@@ -35,6 +35,21 @@ export const api = {
       request<{ id: string; active: boolean }>("POST", `/api/partners/${id}/active`, { active }),
     resetPassword: (id: string) =>
       request<{ password: string }>("POST", `/api/partners/${id}/password`),
+  },
+
+  materials: {
+    list: () => request<Material[]>("GET", "/api/materials"),
+    upload: async (input: { title: string; description?: string; file: File }) => {
+      const form = new FormData();
+      form.set("title", input.title);
+      if (input.description) form.set("description", input.description);
+      form.set("file", input.file);
+      const res = await fetch("/api/materials", { method: "POST", body: form });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error ?? `Request failed (${res.status})`);
+      return data as Material;
+    },
+    remove: (id: string) => request<{ id: string }>("DELETE", `/api/materials/${id}`),
   },
 
   opportunities: {

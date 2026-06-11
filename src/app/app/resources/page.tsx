@@ -2,11 +2,12 @@ import { requireProfile } from "@/lib/auth/profile";
 import { PageHeader } from "@/components/ui/page-header";
 import { AcademyLibrary } from "@/components/support/academy-library";
 import { MaterialLibrary } from "@/components/support/material-library";
+import { UploadedMaterials } from "@/components/support/uploaded-materials";
 
 export const metadata = { title: "Material de apoyo · Mensis Partner Portal" };
 
 export default async function ResourcesPage() {
-  await requireProfile();
+  const profile = await requireProfile();
 
   return (
     <div className="flex flex-col gap-10">
@@ -24,6 +25,8 @@ export default async function ResourcesPage() {
         </div>
         <AcademyLibrary />
       </section>
+
+      <UploadedMaterials isAdmin={profile.role === "admin"} />
 
       <MaterialLibrary />
     </div>

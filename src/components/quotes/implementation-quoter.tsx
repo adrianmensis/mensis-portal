@@ -4,6 +4,8 @@ import { useState } from "react";
 import { fmtCurrency } from "@/lib/format";
 import { NumberField } from "@/components/ui/number-field";
 import { InfoTooltip } from "@/components/ui/tooltip";
+import { QuoteDownload } from "./quote-download";
+import type { QuoteClient } from "@/lib/quote-print";
 
 // Implementation activities, in the order they happen during onboarding.
 // Everything is estimated in HOURS and multiplied by the consultant rate.
@@ -55,7 +57,28 @@ export function ImplementationQuoter() {
   );
   const total = totalHoras * rate;
 
+  const buildDoc = (client: QuoteClient) => ({
+    kind: "Implementación",
+    client,
+    lines: ACTIVITIES.filter((a) => isCounted(a.key)).map((a) => {
+      const h = hours[a.key] ?? 0;
+      return {
+        label: a.name,
+        sub: `${h} h × ${fmtCurrency(rate)}/h`,
+        value: fmtCurrency(h * rate),
+      };
+    }),
+    totals: [
+      { label: "Total horas", value: `${totalHoras} h` },
+      { label: "Total implementación", value: fmtCurrency(total), strong: true },
+    ],
+    note:
+      `100% es tu ganancia — la implementación no tiene comisión Mensis. ` +
+      `Usuarios: ${usuarios.toLocaleString()} · Tarifa consultor: ${fmtCurrency(rate)}/h.`,
+  });
+
   return (
+    <div className="flex flex-col gap-6">
     <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
       <div className="flex flex-col gap-5 rounded-2xl border border-zinc-200 bg-white p-6">
         <div className="grid gap-5 sm:grid-cols-2">
@@ -135,6 +158,9 @@ export function ImplementationQuoter() {
           <div className="flex justify-between"><span>Tarifa consultor</span><span>{fmtCurrency(rate)}/h</span></div>
         </div>
       </div>
+    </div>
+
+      <QuoteDownload build={buildDoc} />
     </div>
   );
 }
