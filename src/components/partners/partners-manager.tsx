@@ -4,6 +4,7 @@ import { api } from "@/lib/api/client";
 import { useResource } from "@/lib/hooks/use-resource";
 import { fmtDate, partnerCode } from "@/lib/format";
 import { countryLabel } from "@/lib/countries";
+import { PARTNER_CATEGORY_LABELS } from "@/lib/types";
 import { PageHeader } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingRow } from "@/components/ui/spinner";
@@ -39,9 +40,11 @@ export function PartnersManager() {
           <THead>
             <Th>Código</Th>
             <Th>Partner</Th>
+            <Th>Categoría</Th>
             <Th>País</Th>
             <Th>Teléfono</Th>
             <Th>Ingreso</Th>
+            <Th>Referencia</Th>
             <Th>LinkedIn</Th>
             <Th>Estado</Th>
           </THead>
@@ -61,9 +64,25 @@ export function PartnersManager() {
                     <span className="text-xs text-zinc-400">—</span>
                   )}
                 </Td>
+                <Td>
+                  {p.category ? (
+                    <span
+                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${
+                        p.category === "empresa"
+                          ? "bg-blue-50 text-blue-700 ring-blue-600/20"
+                          : "bg-emerald-50 text-emerald-700 ring-emerald-600/20"
+                      }`}
+                    >
+                      {PARTNER_CATEGORY_LABELS[p.category]}
+                    </span>
+                  ) : (
+                    <span className="text-zinc-400">—</span>
+                  )}
+                </Td>
                 <Td className="text-zinc-500">{countryLabel(p.country)}</Td>
                 <Td className="text-zinc-500">{p.phone ?? "—"}</Td>
                 <Td className="text-zinc-500">{p.entry_date ? fmtDate(p.entry_date) : "—"}</Td>
+                <Td className="text-zinc-500">{p.reference ?? "—"}</Td>
                 <Td>
                   {p.linkedin_url ? (
                     <a

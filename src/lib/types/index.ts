@@ -2,6 +2,13 @@ import type { PlanKey, BillingPeriod } from "@/lib/pricing";
 
 export type Role = "admin" | "partner";
 
+export type PartnerCategory = "consultor" | "empresa";
+
+export const PARTNER_CATEGORY_LABELS: Record<PartnerCategory, string> = {
+  consultor: "Consultor",
+  empresa: "Empresa",
+};
+
 export type Profile = {
   id: string;
   role: Role;
@@ -14,6 +21,8 @@ export type Profile = {
   entry_date: string | null;
   process_stage: string | null;
   linkedin_url: string | null;
+  category: PartnerCategory | null;
+  reference: string | null;
   active: boolean;
   created_at: string;
 };
