@@ -10,6 +10,11 @@ export function fmtBytes(n: number | null | undefined) {
   return `${v.toFixed(v >= 10 || i === 0 ? 0 : 1)} ${units[i]}`;
 }
 
+// Human-friendly opportunity code, e.g. seq 1 → "OPP-0001".
+export function opportunityCode(seq: number | null | undefined) {
+  return `OPP-${String(seq ?? 0).padStart(4, "0")}`;
+}
+
 export function fmtCurrency(n: number) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",

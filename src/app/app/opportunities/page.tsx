@@ -7,7 +7,7 @@ export default async function OpportunitiesPage() {
   const profile = await requireProfile();
   return (
     <OpportunitiesTable
-      title={profile.role === "admin" ? "Todos los prospectos" : "Mis prospectos"}
+      title={profile.role === "admin" ? "Todas las oportunidades" : "Mis oportunidades"}
     />
   );
 }

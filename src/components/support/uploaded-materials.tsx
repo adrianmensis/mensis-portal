@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { api } from "@/lib/api/client";
-import { useResource } from "@/lib/api/use-resource";
+import { useResource } from "@/lib/hooks/use-resource";
 import { fmtBytes, fmtDate } from "@/lib/format";
 import type { Material } from "@/lib/types";
 import { Button } from "@/components/ui/button";

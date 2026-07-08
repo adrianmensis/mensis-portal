@@ -1,7 +1,7 @@
 "use client";
 
 import { api } from "@/lib/api/client";
-import { useResource } from "@/lib/api/use-resource";
+import { useResource } from "@/lib/hooks/use-resource";
 import { fmtDate } from "@/lib/format";
 import { countryLabel } from "@/lib/countries";
 import { PageHeader } from "@/components/ui/page-header";

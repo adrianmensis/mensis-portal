@@ -47,6 +47,7 @@ export const ACADEMY: AcademyPlaylist[] = [
       { youtubeId: "heXVvSonAPU", title: "Módulo #5: Levantamiento de Experiencias 🚀" },
       { youtubeId: "r20clvrStRk", title: "Módulo #6: Creación de Rutas de Aprendizaje 📚" },
       { youtubeId: "cV8ghuAFcKA", title: "Módulo #7: Funcionalidades 🛠️ y Beneficios 💡" },
+      { youtubeId: "wzw5PfbnEDE", title: "🗺️🛠️ Mensis Tour Partner Toolkit: Domina los Recursos Oficiales de Mensis 🔗" },
     ],
   },
   {
@@ -67,38 +68,23 @@ export const ACADEMY: AcademyPlaylist[] = [
       { youtubeId: "LoSVGyG8RnA", title: "Hackea la Venta Técnica y aborda objeciones especializadas" },
       { youtubeId: "slaMhGcOsx0", title: "🚀 El Pitch Perfecto 🎯 Simulacro de Ventas" },
       { youtubeId: "nHvug049mHQ", title: "El Arte de Vender IA: Tácticas Comerciales para AI Partners 🏆" },
+      { youtubeId: "RS_sR0jWcuQ", title: "🎯 El Simulador Comercial de Mensis" },
     ],
   },
 ];
 
 export const SUPPORT_MATERIAL: MaterialSection[] = [
   {
-    id: "implementation",
-    title: "Implementation Guide",
-    description: "Documentos para configurar y desplegar Mensis con tus clientes.",
-    items: [
-      { type: "doc", title: "Guía de implementación", description: "Paso a paso de onboarding técnico.", url: "#" },
-      { type: "doc", title: "Checklist de despliegue", description: "Lista de verificación antes de salir a producción.", url: "#" },
-      { type: "doc", title: "Integraciones (Microsoft / Google)", description: "Cómo conectar las herramientas del cliente.", url: "#" },
-    ],
-  },
-  {
-    id: "casos-uso",
-    title: "Casos de uso",
-    description: "Ejemplos reales de cómo distintas organizaciones usan Mensis.",
-    items: [
-      { type: "usecase", title: "Retención de conocimiento de líderes", description: "Preservar la experiencia de directivos clave.", url: "#" },
-      { type: "usecase", title: "Onboarding acelerado", description: "Nuevos empleados aprenden de los mejores 24/7.", url: "#" },
-      { type: "usecase", title: "Soporte interno escalable", description: "Un experto disponible para toda la organización.", url: "#" },
-    ],
-  },
-  {
     id: "marketing",
     title: "Material de marketing",
     description: "Recursos para compartir con prospectos y clientes.",
     items: [
-      { type: "doc", title: "Pitch deck oficial", description: "Presentación lista para usar.", url: "#" },
-      { type: "doc", title: "One-pager y brochures", description: "Material imprimible y compartible.", url: "#" },
+      {
+        type: "doc",
+        title: "Carpeta de material publicitario (Google Drive)",
+        description: "Material publicitario y recursos compartidos por Mensis.",
+        url: "https://drive.google.com/drive/folders/19VHghfbwP_BRP2zZ2ekoD4-o-xPByQOK?usp=sharing",
+      },
     ],
   },
 ];

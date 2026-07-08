@@ -5,7 +5,7 @@ export const GET = withAuth(async ({ supabase, request }) => {
   const url = new URL(request.url);
   const filters = {
     partner: url.searchParams.get("partner") ?? undefined,
-    status: url.searchParams.get("status") ?? undefined,
+    stage: url.searchParams.get("stage") ?? undefined,
   };
   const withPartner = url.searchParams.get("withPartner") === "1";
   return listOpportunities(supabase, filters, { withPartner });
@@ -24,6 +24,7 @@ export const POST = withAuth(async ({ supabase, user, request }) => {
       website: String(body.website ?? "").trim(),
       collaborators: num(body.collaborators),
       estimated_avatars: num(body.estimated_avatars),
+      stage: body.stage,
       notes: String(body.notes ?? "").trim(),
     });
     return json(opp, 201);

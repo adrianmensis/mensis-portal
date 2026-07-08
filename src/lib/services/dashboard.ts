@@ -1,22 +1,20 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Opportunity, OpportunityStatus, Profile, Role } from "@/lib/types";
+import type { Opportunity, OpportunityStage, Profile, Role } from "@/lib/types";
+import { OPPORTUNITY_STAGES } from "@/lib/types";
 
 export type DashboardData = {
   role: Role;
   partner_count: number;
   total_opportunities: number;
-  won_value: number;
-  open_value: number;
-  counts: Record<OpportunityStatus, number>;
+  won_value: number; // value of opportunities that reached "client"
+  open_value: number; // value still in the active funnel (not yet client)
+  counts: Record<OpportunityStage, number>;
   recent: Opportunity[];
 };
 
-const EMPTY_COUNTS: Record<OpportunityStatus, number> = {
-  pending: 0,
-  approved: 0,
-  won: 0,
-  lost: 0,
-};
+const EMPTY_COUNTS = Object.fromEntries(
+  OPPORTUNITY_STAGES.map((s) => [s, 0]),
+) as Record<OpportunityStage, number>;
 
 // RLS scopes `opportunities` automatically: admins see all rows, partners see
 // only their own — so the same query powers both dashboards.
@@ -31,13 +29,13 @@ export async function getDashboard(
   const opps = (data ?? []) as Opportunity[];
 
   const counts = { ...EMPTY_COUNTS };
-  for (const o of opps) counts[o.status] += 1;
+  for (const o of opps) counts[o.stage] += 1;
 
   const won_value = opps
-    .filter((o) => o.status === "won")
+    .filter((o) => o.stage === "client")
     .reduce((s, o) => s + (o.estimated_value ?? 0), 0);
   const open_value = opps
-    .filter((o) => o.status === "pending" || o.status === "approved")
+    .filter((o) => o.stage !== "client")
     .reduce((s, o) => s + (o.estimated_value ?? 0), 0);
 
   let partner_count = 0;

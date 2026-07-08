@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { api } from "@/lib/api/client";
-import { useResource } from "@/lib/api/use-resource";
+import { useResource } from "@/lib/hooks/use-resource";
 import { fmtCurrency } from "@/lib/format";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
@@ -52,11 +52,11 @@ export function DashboardView({
             value={data.total_opportunities}
             sub={isAdmin ? "across all partners" : "you registered"}
           />
-          <StatCard label="Won value" value={fmtCurrency(data.won_value)} sub={`${data.counts.won} closed won`} />
+          <StatCard label="Clientes" value={fmtCurrency(data.won_value)} sub={`${data.counts.client} cerrados`} />
           <StatCard
-            label="Open pipeline"
+            label="Pipeline activo"
             value={fmtCurrency(data.open_value)}
-            sub={`${data.counts.pending + data.counts.approved} active`}
+            sub={`${data.total_opportunities - data.counts.client} activas`}
           />
         </div>
       )}

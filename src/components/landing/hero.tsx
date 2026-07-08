@@ -2,10 +2,10 @@ import Image from "next/image";
 import { LoginForm } from "./login-form";
 
 const PARTNER_BENEFITS = [
-  "Manage your referrals and accounts in one place",
-  "Track Digital Twins deployed across your clients",
-  "Real-time commissions and performance",
-  "Resources and onboarding to grow with Mensis",
+  "Gestiona tus referidos y cuentas en un solo lugar",
+  "Da seguimiento a los Digital Twins desplegados en tus clientes",
+  "Comisiones y desempeño en tiempo real",
+  "Recursos y onboarding para crecer junto a Mensis",
 ];
 
 export function Hero() {
@@ -24,10 +24,10 @@ export function Hero() {
 
           <div className="flex flex-col gap-1.5">
             <h1 className="text-2xl font-bold tracking-tight text-zinc-900">
-              Log In
+              Iniciar sesión
             </h1>
             <p className="text-sm text-zinc-400">
-              to continue to the Mensis Partner Portal
+              para continuar al Portal de Partners de Mensis
             </p>
           </div>
 
@@ -40,11 +40,11 @@ export function Hero() {
 
           <div className="relative flex flex-col gap-3">
             <h2 className="text-2xl font-bold tracking-tight text-white">
-              Welcome, Partner.
+              Te damos la bienvenida
             </h2>
             <p className="text-sm leading-relaxed text-brand-light">
-              Your gateway to the Mensis Digital Twin Platform — built to help
-              you grow alongside us.
+              Tu puerta de entrada a la plataforma de Digital Twins de Mensis,
+              diseñada para ayudarte a crecer junto a nosotros.
             </p>
           </div>
 

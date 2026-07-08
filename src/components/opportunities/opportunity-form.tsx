@@ -1,15 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
-import { api } from "@/lib/api/client";
+import { useState } from "react";
+import { useCreateOpportunity } from "@/lib/hooks/use-create-opportunity";
 import { fmtCurrency } from "@/lib/format";
-import { AVATAR_PRICE, COMMISSION_RATE, avatarAmount, annualCommission } from "@/lib/pricing";
+import {
+  COMMISSION_RATE,
+  annualAmount,
+  commission,
+  planUnitPrice,
+  type PlanKey,
+  type BillingPeriod,
+} from "@/lib/pricing";
+import { OPPORTUNITY_STAGES, STAGE_LABELS, type OpportunityStage } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { TextField } from "@/components/ui/text-field";
 import { NumberField } from "@/components/ui/number-field";
+import { Select } from "@/components/ui/select";
+import { InfoTooltip } from "@/components/ui/tooltip";
+import { PlanPicker } from "./plan-picker";
 
 export function OpportunityForm({
   onSuccess,
@@ -18,47 +28,67 @@ export function OpportunityForm({
   onSuccess?: () => void;
   onCancel?: () => void;
 }) {
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
-  const [avatars, setAvatars] = useState(0);
+  const { mutate, pending, error } = useCreateOpportunity({ onSuccess });
+  const [twins, setTwins] = useState(0);
   const [collaborators, setCollaborators] = useState(0);
+  const [stage, setStage] = useState<OpportunityStage>("lead");
+  const [plan, setPlan] = useState<PlanKey>("starter");
+  const [billing, setBilling] = useState<BillingPeriod>("monthly");
+  const [customPrice, setCustomPrice] = useState(0);
 
-  const montoAnual = avatarAmount(avatars) * 12;
-  const comisionAnual = annualCommission(avatars);
+  const unitPrice = planUnitPrice(plan, customPrice);
+  const montoAnual = annualAmount(twins, plan, billing, customPrice);
+  const comisionAnual = commission(montoAnual);
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
-    const input = {
+    mutate({
       client_name: String(fd.get("client_name") ?? ""),
       website: String(fd.get("website") ?? ""),
       collaborators,
-      estimated_avatars: avatars,
+      estimated_avatars: twins,
+      plan,
+      billing_period: billing,
+      custom_price: plan === "enterprise" ? customPrice : null,
+      stage,
       notes: String(fd.get("notes") ?? ""),
-    };
-    startTransition(async () => {
-      try {
-        await api.opportunities.create(input);
-        if (onSuccess) {
-          onSuccess();
-        } else {
-          router.push("/app/opportunities");
-          router.refresh();
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "No se pudo registrar.");
-      }
     });
   }
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-6">
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 text-left sm:grid-cols-2">
         <TextField label="Nombre del cliente *" name="client_name" required placeholder="Acme Corp" wrapperClassName="sm:col-span-2" />
         <TextField label="Web site" name="website" type="url" placeholder="https://acme.com" wrapperClassName="sm:col-span-2" />
+        <div className="flex flex-col gap-1.5 sm:col-span-2">
+          <Label htmlFor="stage">Estado</Label>
+          <Select
+            id="stage"
+            name="stage"
+            value={stage}
+            onChange={(e) => setStage(e.target.value as OpportunityStage)}
+          >
+            {OPPORTUNITY_STAGES.map((s) => (
+              <option key={s} value={s}>
+                {STAGE_LABELS[s]}
+              </option>
+            ))}
+          </Select>
+        </div>
         <NumberField label="Cantidad de colaboradores" defaultValue={0} onValue={setCollaborators} />
-        <NumberField label="Cantidad de avatares" defaultValue={0} onValue={setAvatars} />
+        <NumberField label="Cantidad de gemelos digitales" defaultValue={0} onValue={setTwins} />
+        <div className="sm:col-span-2">
+          <PlanPicker
+            plan={plan}
+            onPlan={setPlan}
+            billing={billing}
+            onBilling={setBilling}
+            customPrice={customPrice}
+            onCustomPrice={setCustomPrice}
+            twins={twins}
+          />
+        </div>
         <div className="flex flex-col gap-1.5 sm:col-span-2">
           <Label htmlFor="notes">Notas</Label>
           <textarea
@@ -74,25 +104,25 @@ export function OpportunityForm({
       {/* Live earnings preview (annual) */}
       <div className="grid gap-4 rounded-2xl border border-brand/15 bg-brand/[0.03] p-5 sm:grid-cols-3">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">Avatares × ${AVATAR_PRICE}/mes</p>
-          <p className="mt-1 text-xl font-bold text-zinc-900">{avatars}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">Gemelos digitales × ${unitPrice}/mes</p>
+          <p className="mt-1 text-xl font-bold text-zinc-900">{twins}</p>
         </div>
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">Monto anual</p>
           <p className="mt-1 text-xl font-bold text-zinc-900">{fmtCurrency(montoAnual)}</p>
         </div>
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-brand">Tu comisión anual ({COMMISSION_RATE * 100}%)</p>
+          <p className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-widest text-brand">
+            Tu comisión anual ({COMMISSION_RATE * 100}%)
+            <InfoTooltip text="Esto es una aproximación. El cálculo real es contra factura." />
+          </p>
           <p className="mt-1 text-xl font-bold text-brand">{fmtCurrency(comisionAnual)}</p>
         </div>
       </div>
 
       {error && <p className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm text-red-500">{error}</p>}
 
-      <div className="flex items-center gap-3">
-        <Button type="submit" disabled={pending}>
-          {pending ? "Guardando…" : "Registrar oportunidad"}
-        </Button>
+      <div className="flex items-center justify-end gap-3">
         {onCancel ? (
           <button type="button" onClick={onCancel} className="text-sm font-medium text-zinc-500 transition-colors hover:text-zinc-800">
             Cancelar
@@ -102,6 +132,9 @@ export function OpportunityForm({
             Cancelar
           </Link>
         )}
+        <Button type="submit" disabled={pending}>
+          {pending ? "Guardando…" : "Crear oportunidad!"}
+        </Button>
       </div>
     </form>
   );

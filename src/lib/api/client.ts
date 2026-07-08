@@ -1,6 +1,11 @@
-import type { Material, Opportunity, OpportunityStatus, Profile } from "@/lib/types";
+import type { Material, Opportunity, Profile } from "@/lib/types";
 import type { PartnerWithCount, CreatePartnerInput } from "@/lib/services/partners";
-import type { OpportunityWithPartner, CreateOpportunityInput, OpportunityFilters } from "@/lib/services/opportunities";
+import type {
+  OpportunityWithPartner,
+  CreateOpportunityInput,
+  OpportunityFilters,
+  UpdateOpportunityInput,
+} from "@/lib/services/opportunities";
 import type { DashboardData } from "@/lib/services/dashboard";
 
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
@@ -59,17 +64,14 @@ export const api = {
         "/api/opportunities" +
           qs({
             partner: filters.partner,
-            status: filters.status,
+            stage: filters.stage,
             withPartner: filters.withPartner ? "1" : undefined,
           }),
       ),
+    get: (id: string) => request<OpportunityWithPartner>("GET", `/api/opportunities/${id}`),
     create: (input: CreateOpportunityInput) =>
       request<Opportunity>("POST", "/api/opportunities", input),
-    setStatus: (id: string, status: OpportunityStatus) =>
-      request<{ id: string; status: OpportunityStatus }>(
-        "POST",
-        `/api/opportunities/${id}/status`,
-        { status },
-      ),
+    update: (id: string, input: UpdateOpportunityInput) =>
+      request<Opportunity>("PATCH", `/api/opportunities/${id}`, input),
   },
 };

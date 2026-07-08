@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useToast } from "@/lib/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { OpportunityForm } from "./opportunity-form";
@@ -15,6 +16,7 @@ export function CreateOpportunityModal({
   variant?: "primary" | "secondary";
 }) {
   const [open, setOpen] = useState(false);
+  const toast = useToast();
 
   return (
     <>
@@ -27,10 +29,13 @@ export function CreateOpportunityModal({
         onClose={() => setOpen(false)}
         title="Nueva oportunidad"
         subtitle="Registra un nuevo cliente potencial."
+        size="lg"
+        dismissible={false}
       >
         <OpportunityForm
           onSuccess={() => {
             setOpen(false);
+            toast.success("Oportunidad creada exitosamente.");
             onCreated?.();
           }}
           onCancel={() => setOpen(false)}

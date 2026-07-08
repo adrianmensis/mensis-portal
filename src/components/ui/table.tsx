@@ -28,8 +28,23 @@ export function TBody({ children }: { children: ReactNode }) {
   return <tbody className="divide-y divide-zinc-100">{children}</tbody>;
 }
 
-export function Tr({ children }: { children: ReactNode }) {
-  return <tr className="hover:bg-zinc-50/50">{children}</tr>;
+export function Tr({
+  children,
+  className = "",
+  onClick,
+}: {
+  children: ReactNode;
+  className?: string;
+  onClick?: () => void;
+}) {
+  return (
+    <tr
+      onClick={onClick}
+      className={`hover:bg-zinc-50/50 ${onClick ? "cursor-pointer" : ""} ${className}`.trim()}
+    >
+      {children}
+    </tr>
+  );
 }
 
 export function Td({ className = "", children, ...rest }: TdHTMLAttributes<HTMLTableCellElement>) {
