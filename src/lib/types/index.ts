@@ -5,6 +5,7 @@ export type Role = "admin" | "partner";
 export type Profile = {
   id: string;
   role: Role;
+  seq: number;
   full_name: string | null;
   country: string | null;
   email: string | null;

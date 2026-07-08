@@ -2,7 +2,7 @@
 
 import { api } from "@/lib/api/client";
 import { useResource } from "@/lib/hooks/use-resource";
-import { fmtDate } from "@/lib/format";
+import { fmtDate, partnerCode } from "@/lib/format";
 import { countryLabel } from "@/lib/countries";
 import { PageHeader } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -37,6 +37,7 @@ export function PartnersManager() {
       {partners && partners.length > 0 && (
         <Table>
           <THead>
+            <Th>Código</Th>
             <Th>Partner</Th>
             <Th>País</Th>
             <Th>Teléfono</Th>
@@ -47,6 +48,9 @@ export function PartnersManager() {
           <TBody>
             {partners.map((p) => (
               <Tr key={p.id}>
+                <Td>
+                  <span className="font-mono text-xs text-zinc-500">{partnerCode(p.seq)}</span>
+                </Td>
                 <Td>
                   <div className="font-medium text-zinc-800">{p.full_name ?? "—"}</div>
                   {p.email ? (

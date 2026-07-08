@@ -15,6 +15,11 @@ export function opportunityCode(seq: number | null | undefined) {
   return `OPP-${String(seq ?? 0).padStart(4, "0")}`;
 }
 
+// Human-friendly partner code, e.g. seq 1 → "PART-0001".
+export function partnerCode(seq: number | null | undefined) {
+  return `PART-${String(seq ?? 0).padStart(4, "0")}`;
+}
+
 export function fmtCurrency(n: number) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
