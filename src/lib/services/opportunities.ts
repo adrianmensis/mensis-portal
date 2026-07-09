@@ -158,9 +158,10 @@ export async function updateOpportunity(
   supabase: SupabaseClient,
   id: string,
   input: UpdateOpportunityInput,
-  ctx: { isAdmin: boolean },
+  ctx: { isAdmin: boolean; userId: string },
 ): Promise<Opportunity> {
-  // RLS scopes this read to rows the caller may see (own row, or all for admin).
+  // RLS scopes this read to rows the caller may see: own rows, all rows for an
+  // admin, or the whole network minus Mensis' deals for a partner_admin.
   const { data: current } = await supabase
     .from("opportunities")
     .select("*")
@@ -168,6 +169,12 @@ export async function updateOpportunity(
     .maybeSingle();
   if (!current) throw new Error("Oportunidad no encontrada.");
   const opp = current as Opportunity;
+
+  // A partner_admin reads the network but writes only its own rows. RLS would
+  // reject the write anyway; this turns that into a legible error.
+  if (!ctx.isAdmin && opp.partner_id !== ctx.userId) {
+    throw new Error("Solo puedes editar las oportunidades que registraste.");
+  }
 
   const allowed: readonly string[] = ctx.isAdmin
     ? [...PARTNER_FIELDS, ...ADMIN_ONLY_FIELDS]

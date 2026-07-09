@@ -9,6 +9,7 @@ import { StatCard } from "@/components/ui/stat-card";
 import { Button } from "@/components/ui/button";
 import { LoadingRow } from "@/components/ui/spinner";
 import { CreatePartnerModal } from "@/components/partners/create-partner-modal";
+import { canManagePartners } from "@/lib/auth/permissions";
 import type { Role } from "@/lib/types";
 
 export function DashboardView({
@@ -18,7 +19,9 @@ export function DashboardView({
   role: Role;
   fullName: string | null;
 }) {
-  const isAdmin = role === "admin";
+  // Both admin and partner_admin run the network; the stats they see are
+  // narrowed by RLS, not by this flag.
+  const isAdmin = canManagePartners(role);
   const { data, loading, error, reload } = useResource(() => api.dashboard());
 
   const action = isAdmin ? (

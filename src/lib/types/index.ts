@@ -1,8 +1,24 @@
 import type { PlanKey, BillingPeriod } from "@/lib/pricing";
 
-export type Role = "admin" | "partner";
+// admin        — Mensis staff. Sees everything, including Mensis' own deals.
+// partner_admin — runs the partner network: manages partner accounts and reads
+//                 the whole pipeline except Mensis' own deals.
+// partner       — sees and edits only what it registered.
+export type Role = "admin" | "partner_admin" | "partner";
 
-export type PartnerCategory = "consultor" | "empresa";
+export const ROLE_LABELS: Record<Role, string> = {
+  admin: "Admin",
+  partner_admin: "Partner Admin",
+  partner: "Partner",
+};
+
+// Roles the Partners tab may assign. `admin` is deliberately absent: Mensis
+// staff accounts are provisioned in SQL, never through the partner UI.
+export const ASSIGNABLE_PARTNER_ROLES = ["partner", "partner_admin"] as const;
+export type PartnerRole = (typeof ASSIGNABLE_PARTNER_ROLES)[number];
+
+export const PARTNER_CATEGORIES = ["consultor", "empresa"] as const;
+export type PartnerCategory = (typeof PARTNER_CATEGORIES)[number];
 
 export const PARTNER_CATEGORY_LABELS: Record<PartnerCategory, string> = {
   consultor: "Consultor",

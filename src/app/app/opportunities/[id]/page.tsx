@@ -10,5 +10,5 @@ export default async function OpportunityDetailPage({
 }) {
   const profile = await requireProfile();
   const { id } = await params;
-  return <OpportunityDetail id={id} role={profile.role} />;
+  return <OpportunityDetail id={id} role={profile.role} viewerId={profile.id} />;
 }

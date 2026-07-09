@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Opportunity, OpportunityStage, Profile, Role } from "@/lib/types";
-import { OPPORTUNITY_STAGES } from "@/lib/types";
+import { ASSIGNABLE_PARTNER_ROLES, OPPORTUNITY_STAGES } from "@/lib/types";
+import { seesNetworkPipeline } from "@/lib/auth/permissions";
 
 export type DashboardData = {
   role: Role;
@@ -16,8 +17,9 @@ const EMPTY_COUNTS = Object.fromEntries(
   OPPORTUNITY_STAGES.map((s) => [s, 0]),
 ) as Record<OpportunityStage, number>;
 
-// RLS scopes `opportunities` automatically: admins see all rows, partners see
-// only their own — so the same query powers both dashboards.
+// RLS scopes `opportunities` automatically: admins see all rows, partner_admins
+// the network minus Mensis' own deals, partners only their own — so the same
+// query powers every dashboard.
 export async function getDashboard(
   supabase: SupabaseClient,
   profile: Profile,
@@ -39,11 +41,11 @@ export async function getDashboard(
     .reduce((s, o) => s + (o.estimated_value ?? 0), 0);
 
   let partner_count = 0;
-  if (profile.role === "admin") {
+  if (seesNetworkPipeline(profile.role)) {
     const { count } = await supabase
       .from("profiles")
       .select("*", { count: "exact", head: true })
-      .eq("role", "partner");
+      .in("role", [...ASSIGNABLE_PARTNER_ROLES]);
     partner_count = count ?? 0;
   }
 

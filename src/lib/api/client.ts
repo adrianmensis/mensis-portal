@@ -1,5 +1,9 @@
 import type { Material, Opportunity, Profile } from "@/lib/types";
-import type { PartnerWithCount, CreatePartnerInput } from "@/lib/services/partners";
+import type {
+  PartnerWithCount,
+  CreatePartnerInput,
+  UpdatePartnerInput,
+} from "@/lib/services/partners";
 import type {
   OpportunityWithPartner,
   CreateOpportunityInput,
@@ -34,8 +38,12 @@ export const api = {
 
   partners: {
     list: () => request<PartnerWithCount[]>("GET", "/api/partners"),
+    get: (id: string) => request<PartnerWithCount>("GET", `/api/partners/${id}`),
     create: (input: CreatePartnerInput) =>
       request<{ email: string; password: string }>("POST", "/api/partners", input),
+    update: (id: string, input: UpdatePartnerInput) =>
+      request<Profile>("PATCH", `/api/partners/${id}`, input),
+    remove: (id: string) => request<{ id: string }>("DELETE", `/api/partners/${id}`),
     setActive: (id: string, active: boolean) =>
       request<{ id: string; active: boolean }>("POST", `/api/partners/${id}/active`, { active }),
     resetPassword: (id: string) =>

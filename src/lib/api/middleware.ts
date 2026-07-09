@@ -1,8 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { canManagePartners, isAdminRole } from "@/lib/auth/permissions";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { User } from "@supabase/supabase-js";
-import type { Profile } from "@/lib/types";
+import type { Profile, Role } from "@/lib/types";
 
 export type RouteCtx = { params?: Promise<Record<string, string>> };
 
@@ -49,8 +50,9 @@ export function withAuth(handler: (ctx: AuthCtx) => Promise<unknown>) {
   return wrap(handler as (ctx: AuthCtx) => Promise<unknown>);
 }
 
-// Active admins only; provides a service-role client for privileged ops.
-export function withAdmin(handler: (ctx: AdminCtx) => Promise<unknown>) {
+// Gates a handler on the caller's role and hands it a service-role client for
+// privileged ops (auth user CRUD, Storage).
+function withRole(allow: (role: Role) => boolean, handler: (ctx: AdminCtx) => Promise<unknown>) {
   return wrap(async (ctx) => {
     const { data } = await ctx.supabase
       .from("profiles")
@@ -58,9 +60,19 @@ export function withAdmin(handler: (ctx: AdminCtx) => Promise<unknown>) {
       .eq("id", ctx.user.id)
       .maybeSingle();
     const profile = data as Profile | null;
-    if (!profile || profile.role !== "admin" || !profile.active) {
+    if (!profile || !profile.active || !allow(profile.role)) {
       return json({ error: "Forbidden" }, 403);
     }
     return handler({ ...ctx, profile, admin: createAdminClient() });
   });
+}
+
+// Active admins only (Mensis staff): material library, tenant provisioning.
+export function withAdmin(handler: (ctx: AdminCtx) => Promise<unknown>) {
+  return withRole(isAdminRole, handler);
+}
+
+// The roles that run the partner network: admin and partner_admin.
+export function withPartnerAdmin(handler: (ctx: AdminCtx) => Promise<unknown>) {
+  return withRole(canManagePartners, handler);
 }

@@ -1,6 +1,7 @@
 import { requireProfile } from "@/lib/auth/profile";
 import { fmtDate } from "@/lib/format";
 import { countryLabel } from "@/lib/countries";
+import { ROLE_LABELS } from "@/lib/types";
 import { PageHeader } from "@/components/ui/page-header";
 import { Badge } from "@/components/ui/badge";
 import { logout } from "../../login/actions";
@@ -18,7 +19,8 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
 
 export default async function ProfilePage() {
   const p = await requireProfile();
-  const isPartner = p.role === "partner";
+  // Intake fields exist for every network account, not just plain partners.
+  const isPartner = p.role !== "admin";
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6">
@@ -33,9 +35,7 @@ export default async function ProfilePage() {
             <span className="text-lg font-semibold text-zinc-900">{p.full_name ?? "—"}</span>
             <div className="flex items-center gap-2">
               <span className="text-sm text-zinc-500">{p.email}</span>
-              <Badge tone={p.role === "admin" ? "brand" : "emerald"}>
-                {p.role === "admin" ? "Admin" : "Partner"}
-              </Badge>
+              <Badge tone={p.role === "partner" ? "emerald" : "brand"}>{ROLE_LABELS[p.role]}</Badge>
             </div>
           </div>
         </div>

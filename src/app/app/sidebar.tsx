@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { UserMenu } from "./user-menu";
-import type { Role } from "@/lib/types";
+import { ROLE_LABELS, type Role } from "@/lib/types";
 
 type NavItem = { label: string; href: string; icon: React.ReactNode };
 
@@ -56,6 +56,15 @@ const ICONS = {
 
 const NAV: Record<Role, NavItem[]> = {
   admin: [
+    { label: "Dashboard", href: "/app", icon: ICONS.dashboard },
+    { label: "Oportunidades", href: "/app/pipeline", icon: ICONS.pipeline },
+    { label: "Partners", href: "/app/partners", icon: ICONS.partners },
+    { label: "Cotizadores", href: "/app/quotes", icon: ICONS.quotes },
+    { label: "Material de apoyo", href: "/app/resources", icon: ICONS.academy },
+  ],
+  // Same surface as an admin minus the material library (Mensis owns it). The
+  // pipeline and partner list are narrowed by RLS, not by the nav.
+  partner_admin: [
     { label: "Dashboard", href: "/app", icon: ICONS.dashboard },
     { label: "Oportunidades", href: "/app/pipeline", icon: ICONS.pipeline },
     { label: "Partners", href: "/app/partners", icon: ICONS.partners },
@@ -114,7 +123,7 @@ export function Sidebar({
         {!collapsed && (
           <div className="px-4 pb-2">
             <span className="inline-flex items-center rounded-full bg-brand/8 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-brand">
-              {role === "admin" ? "Admin" : "Partner"}
+              {ROLE_LABELS[role]}
             </span>
           </div>
         )}

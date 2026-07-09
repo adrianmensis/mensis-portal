@@ -1,15 +1,18 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { api } from "@/lib/api/client";
 import { useResource } from "@/lib/hooks/use-resource";
 import { fmtCurrency, opportunityCode } from "@/lib/format";
 import { commission, COMMISSION_RATE } from "@/lib/pricing";
+import { canEditOpportunity } from "@/lib/auth/permissions";
 import { PageHeader } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingRow } from "@/components/ui/spinner";
+import { StageBadge } from "@/components/ui/stage-badge";
 import { Table, THead, Th, TBody, Tr, Td } from "@/components/ui/table";
-import { OPPORTUNITY_STAGES, STAGE_LABELS } from "@/lib/types";
+import { OPPORTUNITY_STAGES, STAGE_LABELS, type Role } from "@/lib/types";
 import { StageSelect } from "./stage-select";
 import { CreateOpportunityModal } from "@/components/opportunities/create-opportunity-modal";
 
@@ -25,7 +28,11 @@ function hostname(url: string | null) {
   }
 }
 
-export function PipelineManager() {
+// Network-wide pipeline. An admin sees every opportunity; a partner_admin sees
+// the whole partner network except Mensis' own deals (scoped by RLS) and can
+// only change the stage of the ones it registered itself.
+export function PipelineManager({ role, viewerId }: { role: Role; viewerId: string }) {
+  const router = useRouter();
   const { data: opps, loading, error, reload } = useResource(() =>
     api.opportunities.list({ withPartner: true }),
   );
@@ -94,12 +101,18 @@ export function PipelineManager() {
           </THead>
           <TBody>
             {filtered.map((o) => (
-              <Tr key={o.id}>
+              <Tr key={o.id} onClick={() => router.push(`/app/opportunities/${o.id}`)}>
                 <Td className="font-mono text-xs font-semibold text-brand">{opportunityCode(o.seq)}</Td>
                 <Td className="font-medium text-zinc-800">{o.client_name}</Td>
                 <Td>
                   {o.website ? (
-                    <a href={o.website} target="_blank" rel="noreferrer" className="text-brand hover:underline">
+                    <a
+                      href={o.website}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-brand hover:underline"
+                    >
                       {hostname(o.website)}
                     </a>
                   ) : (
@@ -111,8 +124,12 @@ export function PipelineManager() {
                 <Td className="text-zinc-500">{o.estimated_avatars ?? "—"}</Td>
                 <Td className="text-zinc-600">{fmtCurrency(o.estimated_value ?? 0)}</Td>
                 <Td className="font-semibold text-brand">{fmtCurrency(commission(o.estimated_value ?? 0))}</Td>
-                <Td>
-                  <StageSelect oppId={o.id} stage={o.stage} onChanged={reload} />
+                <Td onClick={(e) => e.stopPropagation()}>
+                  {canEditOpportunity(role, viewerId, o.partner_id) ? (
+                    <StageSelect oppId={o.id} stage={o.stage} onChanged={reload} />
+                  ) : (
+                    <StageBadge stage={o.stage} />
+                  )}
                 </Td>
               </Tr>
             ))}

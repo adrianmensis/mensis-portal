@@ -14,6 +14,7 @@ export function NumberField({
   suffix,
   onValue,
   wrapperClassName = "",
+  disabled = false,
 }: {
   label?: string;
   name?: string;
@@ -22,6 +23,7 @@ export function NumberField({
   suffix?: string;
   onValue: (n: number) => void;
   wrapperClassName?: string;
+  disabled?: boolean;
 }) {
   const [text, setText] = useState(defaultValue ? String(defaultValue) : "");
 
@@ -35,7 +37,11 @@ export function NumberField({
   return (
     <div className={`flex flex-col gap-1.5 ${wrapperClassName}`.trim()}>
       {label && <Label htmlFor={name}>{label}</Label>}
-      <div className="flex h-11 items-center rounded-xl border border-zinc-200 bg-zinc-50/50 px-3.5 transition-colors focus-within:border-brand/40 focus-within:bg-white focus-within:ring-4 focus-within:ring-brand/10">
+      <div
+        className={`flex h-11 items-center rounded-xl border border-zinc-200 bg-zinc-50/50 px-3.5 transition-colors focus-within:border-brand/40 focus-within:bg-white focus-within:ring-4 focus-within:ring-brand/10 ${
+          disabled ? "opacity-60" : ""
+        }`.trim()}
+      >
         {prefix && <span className="mr-1 text-sm text-zinc-400">{prefix}</span>}
         <input
           id={name}
@@ -43,6 +49,7 @@ export function NumberField({
           inputMode="decimal"
           value={text}
           onChange={handle}
+          disabled={disabled}
           placeholder="0"
           className="h-full w-full bg-transparent text-sm text-zinc-900 outline-none placeholder:text-zinc-400"
         />

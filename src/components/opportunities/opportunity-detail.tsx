@@ -23,6 +23,7 @@ import {
   type Role,
   type VideoPlatform,
 } from "@/lib/types";
+import { canEditOpportunity, isAdminRole } from "@/lib/auth/permissions";
 import { LoadingRow } from "@/components/ui/spinner";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -48,7 +49,15 @@ function Breadcrumb({ code }: { code?: string }) {
   );
 }
 
-export function OpportunityDetail({ id, role }: { id: string; role: Role }) {
+export function OpportunityDetail({
+  id,
+  role,
+  viewerId,
+}: {
+  id: string;
+  role: Role;
+  viewerId: string;
+}) {
   const { data: opp, loading, error, reload } = useResource(() => api.opportunities.get(id));
 
   return (
@@ -57,7 +66,7 @@ export function OpportunityDetail({ id, role }: { id: string; role: Role }) {
 
       {loading && <LoadingRow label="Cargando oportunidad…" />}
       {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-500">{error}</p>}
-      {opp && <Content key={opp.id} opp={opp} role={role} reload={reload} />}
+      {opp && <Content key={opp.id} opp={opp} role={role} viewerId={viewerId} reload={reload} />}
     </div>
   );
 }
@@ -93,10 +102,21 @@ function Tile({ label, value, accent = false }: { label: string; value: string; 
   );
 }
 
-function Content({ opp, role, reload }: { opp: OpportunityWithPartner; role: Role; reload: () => void }) {
+function Content({
+  opp,
+  role,
+  viewerId,
+  reload,
+}: {
+  opp: OpportunityWithPartner;
+  role: Role;
+  viewerId: string;
+  reload: () => void;
+}) {
   const toast = useToast();
-  const isAdmin = role === "admin";
-  const canEdit = true; // rows shown are the viewer's own (partner) or all (admin)
+  const isAdmin = isAdminRole(role);
+  // A partner_admin reads the whole network but only edits what it registered.
+  const canEdit = canEditOpportunity(role, viewerId, opp.partner_id);
   const [saving, setSaving] = useState(false);
 
   // Información de la oportunidad (editable).
@@ -149,6 +169,12 @@ function Content({ opp, role, reload }: { opp: OpportunityWithPartner; role: Rol
         <h1 className="mt-1 text-2xl font-semibold tracking-tight text-zinc-900">{opp.client_name}</h1>
       </div>
 
+      {!canEdit && (
+        <p className="rounded-xl bg-zinc-100 px-3.5 py-2.5 text-sm text-zinc-500">
+          Solo lectura — esta oportunidad la registró {opp.partner_name ?? "otro partner"}.
+        </p>
+      )}
+
       {/* Stage path (Salesforce-style) */}
       <StagePath
         stage={opp.stage}
@@ -163,13 +189,13 @@ function Content({ opp, role, reload }: { opp: OpportunityWithPartner; role: Rol
         <SectionTitle>Información de la oportunidad</SectionTitle>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Nombre del cliente" htmlFor="io-name" className="sm:col-span-2">
-            <Input id="io-name" value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder="Acme Corp" />
+            <Input id="io-name" value={clientName} onChange={(e) => setClientName(e.target.value)} disabled={!canEdit} placeholder="Acme Corp" />
           </Field>
           <Field label="Sitio web" htmlFor="io-web" className="sm:col-span-2">
-            <Input id="io-web" type="url" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://acme.com" />
+            <Input id="io-web" type="url" value={website} onChange={(e) => setWebsite(e.target.value)} disabled={!canEdit} placeholder="https://acme.com" />
           </Field>
-          <NumberField label="Cantidad de colaboradores" defaultValue={opp.collaborators ?? 0} onValue={setCollaborators} />
-          <NumberField label="Cantidad de gemelos digitales" defaultValue={opp.estimated_avatars ?? 0} onValue={setAvatars} />
+          <NumberField label="Cantidad de colaboradores" defaultValue={opp.collaborators ?? 0} onValue={setCollaborators} disabled={!canEdit} />
+          <NumberField label="Cantidad de gemelos digitales" defaultValue={opp.estimated_avatars ?? 0} onValue={setAvatars} disabled={!canEdit} />
           <div className="sm:col-span-2">
             <PlanPicker
               plan={plan}
@@ -189,8 +215,9 @@ function Content({ opp, role, reload }: { opp: OpportunityWithPartner; role: Rol
               rows={3}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
+              disabled={!canEdit}
               placeholder="Contexto del prospecto…"
-              className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 px-3.5 py-2.5 text-sm text-zinc-900 outline-none transition-colors placeholder:text-zinc-400 focus:border-brand/40 focus:bg-white focus:ring-4 focus:ring-brand/10"
+              className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 px-3.5 py-2.5 text-sm text-zinc-900 outline-none transition-colors placeholder:text-zinc-400 focus:border-brand/40 focus:bg-white focus:ring-4 focus:ring-brand/10 disabled:opacity-60"
             />
           </div>
         </div>

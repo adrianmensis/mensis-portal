@@ -1,8 +1,12 @@
-import { withAdmin, json } from "@/lib/api/middleware";
+import { withPartnerAdmin, json } from "@/lib/api/middleware";
 import { setPartnerActive } from "@/lib/services/partners";
 
-export const POST = withAdmin(async ({ admin, request, params }) => {
+export const POST = withPartnerAdmin(async ({ admin, request, params }) => {
   const body = await request.json().catch(() => ({}));
   if (typeof body.active !== "boolean") return json({ error: "`active` boolean required." }, 400);
-  return setPartnerActive(admin, params.id, body.active);
+  try {
+    return json(await setPartnerActive(admin, params.id, body.active));
+  } catch (err) {
+    return json({ error: err instanceof Error ? err.message : "Failed" }, 400);
+  }
 });

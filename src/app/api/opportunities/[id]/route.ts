@@ -19,7 +19,7 @@ export const PATCH = withAuth(async ({ supabase, user, request, params }) => {
     .maybeSingle();
   const isAdmin = (profile as { role?: string } | null)?.role === "admin";
   try {
-    const opp = await updateOpportunity(supabase, params.id, body, { isAdmin });
+    const opp = await updateOpportunity(supabase, params.id, body, { isAdmin, userId: user.id });
     return json(opp);
   } catch (err) {
     return json({ error: err instanceof Error ? err.message : "Failed" }, 400);
