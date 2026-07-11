@@ -98,6 +98,41 @@ export const VIDEO_PLATFORM_LABELS: Record<VideoPlatform, string> = {
   google_meet: "Google Meet",
 };
 
+// Use case ("caso de uso") — a vertical card grouping target accounts, e.g.
+// Aseguradoras, Bancos y Consultoras. Loaded by admins, browsed by everyone.
+export type UseCase = {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  icon: string | null;
+  accent: string | null;
+  sort_order: number;
+  created_at: string;
+};
+
+// A use case plus how many accounts it holds — powers the card grid.
+export type UseCaseWithCount = UseCase & { account_count: number };
+
+// Target account ("Cuenta objetivo") — a curated prospecting record inside a
+// use case. Loaded by admins, read and filtered by every partner.
+export type TargetAccount = {
+  id: string;
+  use_case_id: string;
+  first_name: string | null;
+  last_name: string | null;
+  role: string | null;
+  country: string | null; // ISO alpha-2
+  company: string;
+  email: string | null;
+  website: string | null;
+  linkedin_url: string | null;
+  phone: string | null;
+  winning_message: string | null;
+  created_by: string | null;
+  created_at: string;
+};
+
 export type Material = {
   id: string;
   title: string;

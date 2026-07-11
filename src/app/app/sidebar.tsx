@@ -52,6 +52,11 @@ const ICONS = {
       <path d="M22 10 12 5 2 10l10 5 10-5z" /><path d="M6 12v5c0 1 2.5 2.5 6 2.5s6-1.5 6-2.5v-5" />
     </svg>
   ),
+  accounts: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" />
+    </svg>
+  ),
 };
 
 const NAV: Record<Role, NavItem[]> = {
@@ -59,6 +64,7 @@ const NAV: Record<Role, NavItem[]> = {
     { label: "Dashboard", href: "/app", icon: ICONS.dashboard },
     { label: "Oportunidades", href: "/app/pipeline", icon: ICONS.pipeline },
     { label: "Partners", href: "/app/partners", icon: ICONS.partners },
+    { label: "Cuentas objetivo", href: "/app/accounts", icon: ICONS.accounts },
     { label: "Cotizadores", href: "/app/quotes", icon: ICONS.quotes },
     { label: "Material de apoyo", href: "/app/resources", icon: ICONS.academy },
   ],
@@ -68,11 +74,13 @@ const NAV: Record<Role, NavItem[]> = {
     { label: "Dashboard", href: "/app", icon: ICONS.dashboard },
     { label: "Oportunidades", href: "/app/pipeline", icon: ICONS.pipeline },
     { label: "Partners", href: "/app/partners", icon: ICONS.partners },
+    { label: "Cuentas objetivo", href: "/app/accounts", icon: ICONS.accounts },
     { label: "Cotizadores", href: "/app/quotes", icon: ICONS.quotes },
     { label: "Material de apoyo", href: "/app/resources", icon: ICONS.academy },
   ],
   partner: [
     { label: "Oportunidades", href: "/app/opportunities", icon: ICONS.opportunities },
+    { label: "Cuentas objetivo", href: "/app/accounts", icon: ICONS.accounts },
     { label: "Cotizadores", href: "/app/quotes", icon: ICONS.quotes },
     { label: "Material de apoyo", href: "/app/resources", icon: ICONS.academy },
   ],

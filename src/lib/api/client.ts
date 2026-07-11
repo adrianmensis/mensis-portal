@@ -1,4 +1,4 @@
-import type { Material, Opportunity, Profile } from "@/lib/types";
+import type { Material, Opportunity, Profile, TargetAccount, UseCaseWithCount } from "@/lib/types";
 import type {
   PartnerWithCount,
   CreatePartnerInput,
@@ -63,6 +63,15 @@ export const api = {
       return data as Material;
     },
     remove: (id: string) => request<{ id: string }>("DELETE", `/api/materials/${id}`),
+  },
+
+  useCases: {
+    list: () => request<UseCaseWithCount[]>("GET", "/api/use-cases"),
+  },
+
+  accounts: {
+    list: (useCaseId?: string) =>
+      request<TargetAccount[]>("GET", "/api/accounts" + qs({ use_case: useCaseId })),
   },
 
   opportunities: {
