@@ -3,9 +3,12 @@
 import { useState, useTransition } from "react";
 import { api } from "@/lib/api/client";
 import {
+  DEFAULT_PARTNER_STAGE,
   PARTNER_CATEGORIES,
   PARTNER_CATEGORY_LABELS,
+  PARTNER_STAGES,
   type PartnerCategory,
+  type PartnerStage,
 } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
@@ -67,6 +70,54 @@ function CopyRow({ label, value }: { label: string; value: string }) {
   );
 }
 
+// Mensaje de bienvenida listo para pegar en correo o WhatsApp. La contraseña
+// no se guarda en ningún lado, así que este es el único momento en que puede
+// armarse: después solo queda restablecerla desde la ficha del partner.
+function welcomeMessage(created: Created) {
+  const portal = typeof window === "undefined" ? "" : window.location.origin;
+  return [
+    `¡Hola ${created.full_name}!`,
+    "",
+    "Ya tienes acceso al Portal de Partners de Mensis. Estos son tus datos de ingreso:",
+    "",
+    `Portal: ${portal}`,
+    `Usuario: ${created.email}`,
+    `Contraseña: ${created.password}`,
+    "",
+    "Te recomendamos cambiar la contraseña la primera vez que entres.",
+    "",
+    "¡Bienvenido a la red!",
+  ].join("\n");
+}
+
+function CopyMessageButton({ created }: { created: Created }) {
+  const [copied, setCopied] = useState(false);
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(welcomeMessage(created));
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // Portapapeles denegado: las credenciales siguen visibles arriba.
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={copy}
+      className={`inline-flex h-11 items-center rounded-xl border px-4 text-sm font-medium transition-colors ${
+        copied
+          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+          : "border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 hover:bg-zinc-50"
+      }`}
+    >
+      {copied ? "Mensaje copiado ✓" : "Copiar mensaje de bienvenida"}
+    </button>
+  );
+}
+
 export function CreatePartnerModal({
   onCreated,
   label = "+ New partner",
@@ -103,6 +154,7 @@ export function CreatePartnerModal({
       linkedin_url: String(fd.get("linkedin_url") ?? ""),
       entry_date: String(fd.get("entry_date") ?? ""),
       category: (String(fd.get("category") ?? "") || null) as PartnerCategory | null,
+      process_stage: String(fd.get("process_stage") ?? "") as PartnerStage,
     };
     startTransition(async () => {
       try {
@@ -136,12 +188,21 @@ export function CreatePartnerModal({
           <CountrySelect label="País de residencia actual" name="country" />
           <TextField label="Fecha de ingreso" name="entry_date" type="date" defaultValue={today()} />
 
-          <div className="flex flex-col gap-1.5 sm:col-span-2">
+          <div className="flex flex-col gap-1.5">
             <Label htmlFor="category">Categoría</Label>
             <Select id="category" name="category" defaultValue="">
               <option value="">Sin especificar</option>
               {PARTNER_CATEGORIES.map((c) => (
                 <option key={c} value={c}>{PARTNER_CATEGORY_LABELS[c]}</option>
+              ))}
+            </Select>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="process_stage">Etapa del proceso</Label>
+            <Select id="process_stage" name="process_stage" defaultValue={DEFAULT_PARTNER_STAGE}>
+              {PARTNER_STAGES.map((s) => (
+                <option key={s} value={s}>{s}</option>
               ))}
             </Select>
           </div>
@@ -188,10 +249,13 @@ export function CreatePartnerModal({
             <CopyRow label="Correo" value={created.email} />
             <CopyRow label="Contraseña" value={created.password} />
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <Button onClick={dismissCredentials} className="px-6">
                 Listo
               </Button>
+              {/* El mensaje completo en un clic: es lo que de verdad se le
+                  envía al partner, con el enlace del portal incluido. */}
+              <CopyMessageButton created={created} />
             </div>
           </div>
         )}

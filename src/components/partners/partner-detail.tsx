@@ -10,10 +10,15 @@ import type { PartnerWithCount } from "@/lib/services/partners";
 import { fmtDate, partnerCode } from "@/lib/format";
 import { COUNTRIES, flagEmoji } from "@/lib/countries";
 import {
+  DEFAULT_PARTNER_STAGE,
   PARTNER_CATEGORIES,
   PARTNER_CATEGORY_LABELS,
+  PARTNER_STAGES,
+  PARTNER_STAGE_TONES,
   ROLE_LABELS,
+  isPartnerStage,
   type PartnerCategory,
+  type PartnerStage,
 } from "@/lib/types";
 import { LoadingRow } from "@/components/ui/spinner";
 import { Badge } from "@/components/ui/badge";
@@ -77,6 +82,11 @@ function Content({ partner, reload }: { partner: PartnerWithCount; reload: () =>
   const [country, setCountry] = useState(partner.country ?? "");
   const [phone, setPhone] = useState(partner.phone ?? "");
   const [category, setCategory] = useState<PartnerCategory | "">(partner.category ?? "");
+  // Una etapa vieja o vacía cae en la primera del embudo para que el select
+  // nunca arranque sin selección.
+  const [stage, setStage] = useState<PartnerStage>(
+    isPartnerStage(partner.process_stage) ? partner.process_stage : DEFAULT_PARTNER_STAGE,
+  );
   const [entryDate, setEntryDate] = useState(partner.entry_date ?? "");
   const [linkedin, setLinkedin] = useState(partner.linkedin_url ?? "");
 
@@ -94,6 +104,7 @@ function Content({ partner, reload }: { partner: PartnerWithCount; reload: () =>
         country: country || null,
         phone: phone.trim() || null,
         category: category || null,
+        process_stage: stage,
         entry_date: entryDate || null,
         linkedin_url: linkedin.trim() || null,
       });
@@ -106,13 +117,17 @@ function Content({ partner, reload }: { partner: PartnerWithCount; reload: () =>
     }
   }
 
-  // Optimistic: flip the switch immediately, revert if the call fails.
+  // Optimistic: flip the switch immediately, revert if the call fails. El
+  // servidor devuelve la fila ya guardada, así que el estado final sale de ahí
+  // y no de lo que asumimos localmente.
   async function toggleActive() {
     const next = !active;
     setActive(next);
     try {
-      await api.partners.setActive(partner.id, next);
+      const updated = await api.partners.setActive(partner.id, next);
+      setActive(updated.active);
       toast.success(next ? "Partner activado." : "Partner desactivado.");
+      reload();
     } catch (err) {
       setActive(!next);
       toast.error(err instanceof Error ? err.message : "No se pudo cambiar el estado.");
@@ -131,8 +146,12 @@ function Content({ partner, reload }: { partner: PartnerWithCount; reload: () =>
   async function remove() {
     setDeleting(true);
     try {
-      await api.partners.remove(partner.id);
-      toast.success("Partner eliminado.");
+      const res = await api.partners.remove(partner.id);
+      toast.success(
+        res.opportunity_count > 0
+          ? `Partner eliminado junto con ${res.opportunity_count} oportunidad${res.opportunity_count === 1 ? "" : "es"}. Queda en el reporte de eliminados.`
+          : "Partner eliminado. Queda en el reporte de eliminados.",
+      );
       router.push("/app/partners");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "No se pudo eliminar.");
@@ -154,6 +173,7 @@ function Content({ partner, reload }: { partner: PartnerWithCount; reload: () =>
             {ROLE_LABELS[partner.role]}
           </Badge>
           <Badge tone={active ? "emerald" : "red"}>{active ? "Activo" : "Inactivo"}</Badge>
+          <Badge tone={PARTNER_STAGE_TONES[stage]}>{stage}</Badge>
         </div>
       </div>
 
@@ -190,6 +210,14 @@ function Content({ partner, reload }: { partner: PartnerWithCount; reload: () =>
           </Field>
           <Field label="Fecha de ingreso" htmlFor="pd-entry">
             <Input id="pd-entry" type="date" value={entryDate} onChange={(e) => setEntryDate(e.target.value)} />
+          </Field>
+
+          <Field label="Etapa del proceso" htmlFor="pd-stage" className="sm:col-span-2">
+            <Select id="pd-stage" value={stage} onChange={(e) => setStage(e.target.value as PartnerStage)}>
+              {PARTNER_STAGES.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </Select>
           </Field>
 
           <Field label="Sitio web o LinkedIn" htmlFor="pd-linkedin" className="sm:col-span-2">
@@ -285,6 +313,9 @@ function Content({ partner, reload }: { partner: PartnerWithCount; reload: () =>
                 ? "la oportunidad que registró"
                 : `las ${partner.opportunity_count} oportunidades que registró`}
             .
+          </p>
+          <p className="text-xs text-zinc-400">
+            La baja queda registrada con tu nombre y la fecha en el reporte de partners eliminados.
           </p>
           <div className="flex items-center gap-3">
             <button

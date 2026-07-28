@@ -22,7 +22,8 @@ export const POST = withPartnerAdmin(async ({ admin, request }) => {
       phone: String(body.phone ?? "").trim(),
       referred_by: String(body.referred_by ?? "").trim(),
       entry_date: String(body.entry_date ?? "").trim(),
-      process_stage: String(body.process_stage ?? "").trim(),
+      // createPartner clampea la etapa igual que role y category.
+      process_stage: body.process_stage,
       linkedin_url: String(body.linkedin_url ?? "").trim(),
       category: body.category || null,
       reference: String(body.reference ?? "").trim(),

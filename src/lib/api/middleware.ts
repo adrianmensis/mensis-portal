@@ -45,9 +45,20 @@ function wrap<T>(
   };
 }
 
-// Any authenticated user. RLS scopes the data automatically.
+// Any authenticated user with la cuenta activa. RLS scopes the data
+// automatically. La bandera `active` se revisa aquí y no solo en las pantallas:
+// desactivar a alguien tiene que cortarle también el acceso a la API mientras
+// su sesión siga viva (el ban de auth solo impide volver a iniciar sesión).
 export function withAuth(handler: (ctx: AuthCtx) => Promise<unknown>) {
-  return wrap(handler as (ctx: AuthCtx) => Promise<unknown>);
+  return wrap(async (ctx) => {
+    const { data } = await ctx.supabase
+      .from("profiles")
+      .select("active")
+      .eq("id", ctx.user.id)
+      .maybeSingle();
+    if (!data?.active) return json({ error: "Cuenta desactivada." }, 403);
+    return handler(ctx);
+  });
 }
 
 // Gates a handler on the caller's role and hands it a service-role client for

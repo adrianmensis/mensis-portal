@@ -18,10 +18,18 @@ export const PATCH = withPartnerAdmin(async ({ admin, request, params }) => {
   }
 });
 
-// Cascades: the partner's opportunities are deleted with the auth user.
-export const DELETE = withPartnerAdmin(async ({ admin, params }) => {
+// Cascades: the partner's opportunities are deleted with the auth user. Queda
+// registrado en partner_deletions con quién lo eliminó — de ahí sale el
+// reporte de eliminados.
+export const DELETE = withPartnerAdmin(async ({ admin, params, profile }) => {
   try {
-    return json(await deletePartner(admin, params.id));
+    return json(
+      await deletePartner(admin, params.id, {
+        id: profile.id,
+        full_name: profile.full_name,
+        email: profile.email,
+      }),
+    );
   } catch (err) {
     return json({ error: err instanceof Error ? err.message : "Failed" }, 400);
   }

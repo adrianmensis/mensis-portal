@@ -1,23 +1,54 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api/client";
 import { useResource } from "@/lib/hooks/use-resource";
+import { downloadCsv, stampedFilename, toCsv, type CsvColumn } from "@/lib/csv";
 import { fmtDate, partnerCode } from "@/lib/format";
-import { countryLabel } from "@/lib/countries";
-import { PARTNER_CATEGORY_LABELS, ROLE_LABELS } from "@/lib/types";
+import { countryByCode, countryLabel } from "@/lib/countries";
+import { partnerHealth, HEALTH_LABELS } from "@/lib/partner-health";
+import { PARTNER_CATEGORY_LABELS, PARTNER_STAGE_TONES, ROLE_LABELS, isPartnerStage } from "@/lib/types";
+import type { PartnerWithCount } from "@/lib/services/partners";
 import { PageHeader } from "@/components/ui/page-header";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingRow } from "@/components/ui/spinner";
 import { Table, THead, Th, TBody, Tr, Td } from "@/components/ui/table";
 import { CreatePartnerModal } from "./create-partner-modal";
+import { PartnerDeletionsModal } from "./partner-deletions-modal";
 import { PartnerHealthBadge } from "./partner-health-badge";
 import { PartnerStatusToggle } from "./partner-status-toggle";
+
+// Columnas del CSV. Van más campos que en la tabla: el archivo es para
+// trabajarlo fuera (Excel, reportes), no para leerlo en pantalla.
+const CSV_COLUMNS: CsvColumn<PartnerWithCount>[] = [
+  { header: "Código", value: (p) => partnerCode(p.seq) },
+  { header: "Nombre", value: (p) => p.full_name },
+  { header: "Correo", value: (p) => p.email },
+  { header: "Rol", value: (p) => ROLE_LABELS[p.role] },
+  { header: "Categoría", value: (p) => (p.category ? PARTNER_CATEGORY_LABELS[p.category] : "") },
+  { header: "Etapa", value: (p) => p.process_stage },
+  { header: "País", value: (p) => countryByCode(p.country)?.name ?? p.country },
+  { header: "Teléfono", value: (p) => p.phone },
+  { header: "Fecha de ingreso", value: (p) => p.entry_date },
+  { header: "Sitio web o LinkedIn", value: (p) => p.linkedin_url },
+  { header: "Referido por", value: (p) => p.referred_by },
+  { header: "Referencia", value: (p) => p.reference },
+  { header: "Oportunidades", value: (p) => p.opportunity_count },
+  {
+    header: "Última oportunidad",
+    value: (p) => (p.last_opportunity_at ? p.last_opportunity_at.slice(0, 10) : ""),
+  },
+  { header: "Salud", value: (p) => HEALTH_LABELS[partnerHealth(p).health] },
+  { header: "Estado", value: (p) => (p.active ? "Activo" : "Inactivo") },
+  { header: "Registrado", value: (p) => p.created_at.slice(0, 10) },
+];
 
 export function PartnersManager() {
   const router = useRouter();
   const { data: partners, loading, error, reload } = useResource(() => api.partners.list());
+  const [showDeletions, setShowDeletions] = useState(false);
 
   return (
     <div className="flex flex-col gap-6">
@@ -26,7 +57,24 @@ export function PartnersManager() {
         subtitle={
           partners ? `${partners.length} partner${partners.length === 1 ? "" : "s"} in the network.` : undefined
         }
-        action={<CreatePartnerModal onCreated={reload} />}
+        action={
+          <div className="flex items-center gap-2">
+            <SecondaryAction onClick={() => setShowDeletions(true)}>
+              <TrashIcon />
+              Eliminados
+            </SecondaryAction>
+            <SecondaryAction
+              onClick={() =>
+                partners && downloadCsv(stampedFilename("partners"), toCsv(CSV_COLUMNS, partners))
+              }
+              disabled={!partners || partners.length === 0}
+            >
+              <DownloadIcon />
+              Descargar
+            </SecondaryAction>
+            <CreatePartnerModal onCreated={reload} />
+          </div>
+        }
       />
 
       {loading && <LoadingRow label="Loading partners…" />}
@@ -44,6 +92,7 @@ export function PartnersManager() {
           <THead>
             <Th>Código</Th>
             <Th>Partner</Th>
+            <Th>Etapa</Th>
             <Th>Categoría</Th>
             <Th>País</Th>
             <Th>Teléfono</Th>
@@ -73,6 +122,17 @@ export function PartnersManager() {
                     </a>
                   ) : (
                     <span className="text-xs text-zinc-400">—</span>
+                  )}
+                </Td>
+                <Td>
+                  {/* Una etapa fuera de lista (dato viejo) se muestra tal cual
+                      en gris en vez de romper el badge. */}
+                  {p.process_stage ? (
+                    <Badge tone={isPartnerStage(p.process_stage) ? PARTNER_STAGE_TONES[p.process_stage] : "neutral"}>
+                      {p.process_stage}
+                    </Badge>
+                  ) : (
+                    <span className="text-zinc-400">—</span>
                   )}
                 </Td>
                 <Td>
@@ -109,13 +169,54 @@ export function PartnersManager() {
                   <PartnerHealthBadge partner={p} />
                 </Td>
                 <Td onClick={(e) => e.stopPropagation()}>
-                  <PartnerStatusToggle partnerId={p.id} active={p.active} />
+                  {/* onChanged recarga la lista: sin eso el resto de la fila
+                      seguía mostrando el estado anterior. */}
+                  <PartnerStatusToggle partnerId={p.id} active={p.active} onChanged={reload} />
                 </Td>
               </Tr>
             ))}
           </TBody>
         </Table>
       )}
+
+      {showDeletions && <PartnerDeletionsModal onClose={() => setShowDeletions(false)} />}
     </div>
+  );
+}
+
+function SecondaryAction({
+  onClick,
+  disabled,
+  children,
+}: {
+  onClick: () => void;
+  disabled?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="inline-flex h-11 items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-4 text-sm font-semibold text-zinc-700 transition-all hover:border-zinc-300 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-60"
+    >
+      {children}
+    </button>
+  );
+}
+
+function DownloadIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3v12" /><path d="m7 10 5 5 5-5" /><path d="M4 21h16" />
+    </svg>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 7h16" /><path d="M10 11v6" /><path d="M14 11v6" /><path d="M6 7l1 13h10l1-13" /><path d="M9 7V4h6v3" />
+    </svg>
   );
 }

@@ -21,10 +21,15 @@ export async function getProfile(): Promise<Profile | null> {
   return (data as Profile) ?? null;
 }
 
-// Guarantees a signed-in profile; redirects to login otherwise.
+// Guarantees a signed-in *active* profile; redirects to login otherwise.
+//
+// Desactivar un partner lo banea en auth, pero eso solo impide iniciar sesión:
+// una sesión ya abierta seguía funcionando hasta que venciera el token, así que
+// el cambio "no se aplicaba". La bandera se revisa en cada render del portal.
 export async function requireProfile(): Promise<Profile> {
   const profile = await getProfile();
   if (!profile) redirect("/");
+  if (!profile.active) redirect("/?inactivo=1");
   return profile;
 }
 

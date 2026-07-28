@@ -8,7 +8,7 @@ const PARTNER_BENEFITS = [
   "Recursos y onboarding para crecer junto a Mensis",
 ];
 
-export function Hero() {
+export function Hero({ notice }: { notice?: string }) {
   return (
     <section className="flex min-h-screen items-center justify-center bg-[#eef1f7] p-4 sm:p-6">
       <div className="grid w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-[0_24px_80px_-24px_rgba(39,59,124,0.25)] md:grid-cols-2">
@@ -30,6 +30,12 @@ export function Hero() {
               para continuar al Portal de Partners de Mensis
             </p>
           </div>
+
+          {notice && (
+            <p className="-mt-4 rounded-lg bg-amber-50 px-3.5 py-2.5 text-sm text-amber-800">
+              {notice}
+            </p>
+          )}
 
           <LoginForm />
         </div>

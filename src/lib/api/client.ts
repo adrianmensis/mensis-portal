@@ -1,4 +1,11 @@
-import type { Material, Opportunity, Profile, TargetAccount, UseCaseWithCount } from "@/lib/types";
+import type {
+  Material,
+  Opportunity,
+  PartnerDeletion,
+  Profile,
+  TargetAccount,
+  UseCaseWithCount,
+} from "@/lib/types";
 import type {
   PartnerWithCount,
   CreatePartnerInput,
@@ -43,9 +50,11 @@ export const api = {
       request<{ email: string; password: string }>("POST", "/api/partners", input),
     update: (id: string, input: UpdatePartnerInput) =>
       request<Profile>("PATCH", `/api/partners/${id}`, input),
-    remove: (id: string) => request<{ id: string }>("DELETE", `/api/partners/${id}`),
+    remove: (id: string) =>
+      request<{ id: string; opportunity_count: number }>("DELETE", `/api/partners/${id}`),
+    deletions: () => request<PartnerDeletion[]>("GET", "/api/partners/deletions"),
     setActive: (id: string, active: boolean) =>
-      request<{ id: string; active: boolean }>("POST", `/api/partners/${id}/active`, { active }),
+      request<Profile>("POST", `/api/partners/${id}/active`, { active }),
     resetPassword: (id: string) =>
       request<{ password: string }>("POST", `/api/partners/${id}/password`),
   },

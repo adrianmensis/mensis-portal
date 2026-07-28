@@ -1,4 +1,5 @@
 import type { PlanKey, BillingPeriod } from "@/lib/pricing";
+import type { BadgeTone } from "@/components/ui/badge";
 
 // admin        — Mensis staff. Sees everything, including Mensis' own deals.
 // partner_admin — runs the partner network: manages partner accounts and reads
@@ -25,6 +26,29 @@ export const PARTNER_CATEGORY_LABELS: Record<PartnerCategory, string> = {
   empresa: "Empresa",
 };
 
+// Etapas por las que pasa un candidato hasta quedar activo en la red. En orden.
+export const PARTNER_STAGES = [
+  "IA Partner Showcase",
+  "Business Discovery",
+  "Contract Review",
+  "Partner!",
+] as const;
+
+export type PartnerStage = (typeof PARTNER_STAGES)[number];
+
+export const PARTNER_STAGE_TONES: Record<PartnerStage, BadgeTone> = {
+  "IA Partner Showcase": "neutral",
+  "Business Discovery": "blue",
+  "Contract Review": "amber",
+  "Partner!": "emerald",
+};
+
+export const DEFAULT_PARTNER_STAGE: PartnerStage = "IA Partner Showcase";
+
+export function isPartnerStage(value: unknown): value is PartnerStage {
+  return PARTNER_STAGES.includes(value as PartnerStage);
+}
+
 export type Profile = {
   id: string;
   role: Role;
@@ -35,7 +59,7 @@ export type Profile = {
   phone: string | null;
   referred_by: string | null;
   entry_date: string | null;
-  process_stage: string | null;
+  process_stage: PartnerStage | null;
   linkedin_url: string | null;
   category: PartnerCategory | null;
   reference: string | null;
@@ -43,14 +67,29 @@ export type Profile = {
   created_at: string;
 };
 
-// Stages of the partner onboarding process. Adjust to match your real flow.
-export const PARTNER_STAGES = [
-  "Prospecto",
-  "Entrevista",
-  "Onboarding",
-  "Activo",
-  "Inactivo",
-] as const;
+// Una eliminación de partner, tal como quedó registrada en la bitácora. El
+// partner ya no existe: esto es la foto que se guardó antes de borrarlo.
+export type PartnerDeletion = {
+  id: string;
+  partner_seq: number | null;
+  full_name: string | null;
+  email: string | null;
+  country: string | null;
+  phone: string | null;
+  category: PartnerCategory | null;
+  process_stage: string | null;
+  entry_date: string | null;
+  reference: string | null;
+  referred_by: string | null;
+  partner_role: Role | null;
+  linkedin_url: string | null;
+  partner_created_at: string | null;
+  opportunity_count: number;
+  deleted_by: string | null;
+  deleted_by_name: string | null;
+  deleted_by_email: string | null;
+  deleted_at: string;
+};
 
 // Commercial funnel stage — the single source of truth for where a prospect
 // sits in the sales process.
