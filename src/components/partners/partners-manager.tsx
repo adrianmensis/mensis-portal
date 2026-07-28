@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api/client";
 import { useResource } from "@/lib/hooks/use-resource";
@@ -8,7 +8,13 @@ import { downloadCsv, stampedFilename, toCsv, type CsvColumn } from "@/lib/csv";
 import { fmtDate, partnerCode } from "@/lib/format";
 import { countryByCode, countryLabel } from "@/lib/countries";
 import { partnerHealth, HEALTH_LABELS } from "@/lib/partner-health";
-import { PARTNER_CATEGORY_LABELS, PARTNER_STAGE_TONES, ROLE_LABELS, isPartnerStage } from "@/lib/types";
+import {
+  PARTNER_CATEGORY_LABELS,
+  PARTNER_STAGE_TONES,
+  ROLE_LABELS,
+  isPartnerStage,
+  type PartnerStage,
+} from "@/lib/types";
 import type { PartnerWithCount } from "@/lib/services/partners";
 import { PageHeader } from "@/components/ui/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +24,13 @@ import { Table, THead, Th, TBody, Tr, Td } from "@/components/ui/table";
 import { CreatePartnerModal } from "./create-partner-modal";
 import { PartnerDeletionsModal } from "./partner-deletions-modal";
 import { PartnerHealthBadge } from "./partner-health-badge";
+import { PartnersOverview, computeStats } from "./partners-overview";
 import { PartnerStatusToggle } from "./partner-status-toggle";
+
+// Filas por página. La lista completa ya viene del API y se pagina en el
+// cliente: con la red actual (decenas) sobra, y así el panel, el buscador y la
+// descarga siguen viendo el total sin pedir nada extra.
+const PAGE_SIZE = 20;
 
 // Columnas del CSV. Van más campos que en la tabla: el archivo es para
 // trabajarlo fuera (Excel, reportes), no para leerlo en pantalla.
@@ -49,6 +61,42 @@ export function PartnersManager() {
   const router = useRouter();
   const { data: partners, loading, error, reload } = useResource(() => api.partners.list());
   const [showDeletions, setShowDeletions] = useState(false);
+  const [stageFilter, setStageFilter] = useState<PartnerStage | null>(null);
+  const [query, setQuery] = useState("");
+  const [page, setPage] = useState(0);
+
+  // El panel siempre resume la red completa: filtrar la tabla no cambia los
+  // totales de arriba.
+  const stats = useMemo(() => computeStats(partners ?? []), [partners]);
+
+  // Buscar por nombre, correo, código o país cubre lo que se tiene a mano al
+  // buscar a alguien — sobre todo el correo, para saber si ya está cargado.
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return (partners ?? []).filter((p) => {
+      if (stageFilter && p.process_stage !== stageFilter) return false;
+      if (!q) return true;
+      return [p.full_name, p.email, partnerCode(p.seq), countryByCode(p.country)?.name]
+        .some((field) => field?.toLowerCase().includes(q));
+    });
+  }, [partners, stageFilter, query]);
+
+  // Un filtro puede dejar menos páginas de las que había: sin esto la tabla se
+  // queda en una página vacía.
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount - 1);
+  const pageRows = filtered.slice(currentPage * PAGE_SIZE, currentPage * PAGE_SIZE + PAGE_SIZE);
+  const filtering = stageFilter !== null || query.trim() !== "";
+
+  function applyStageFilter(stage: PartnerStage | null) {
+    setStageFilter(stage);
+    setPage(0);
+  }
+
+  function applyQuery(value: string) {
+    setQuery(value);
+    setPage(0);
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -63,11 +111,10 @@ export function PartnersManager() {
               <TrashIcon />
               Eliminados
             </SecondaryAction>
+            {/* Baja lo que está filtrado, no solo la página visible. */}
             <SecondaryAction
-              onClick={() =>
-                partners && downloadCsv(stampedFilename("partners"), toCsv(CSV_COLUMNS, partners))
-              }
-              disabled={!partners || partners.length === 0}
+              onClick={() => downloadCsv(stampedFilename("partners"), toCsv(CSV_COLUMNS, filtered))}
+              disabled={filtered.length === 0}
             >
               <DownloadIcon />
               Descargar
@@ -80,6 +127,10 @@ export function PartnersManager() {
       {loading && <LoadingRow label="Loading partners…" />}
       {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-500">{error}</p>}
 
+      {partners && partners.length > 0 && (
+        <PartnersOverview stats={stats} stageFilter={stageFilter} onStageFilter={applyStageFilter} />
+      )}
+
       {!loading && partners && partners.length === 0 && (
         <EmptyState
           message="No partners yet."
@@ -88,6 +139,36 @@ export function PartnersManager() {
       )}
 
       {partners && partners.length > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <SearchField value={query} onChange={applyQuery} />
+          <div className="flex items-center gap-3 text-sm text-zinc-500">
+            {filtering && (
+              <>
+                <span>
+                  {filtered.length} de {partners.length}
+                  {stageFilter && <> en <span className="font-medium text-zinc-700">{stageFilter}</span></>}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    applyStageFilter(null);
+                    applyQuery("");
+                  }}
+                  className="font-medium text-brand transition-colors hover:underline"
+                >
+                  Limpiar
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {partners && partners.length > 0 && filtered.length === 0 && (
+        <EmptyState message="Ningún partner coincide con la búsqueda." />
+      )}
+
+      {pageRows.length > 0 && (
         <Table>
           <THead>
             <Th>Código</Th>
@@ -102,7 +183,7 @@ export function PartnersManager() {
             <Th>Estado</Th>
           </THead>
           <TBody>
-            {partners.map((p) => (
+            {pageRows.map((p) => (
               <Tr key={p.id} onClick={() => router.push(`/app/partners/${p.id}`)}>
                 <Td>
                   <span className="font-mono text-xs font-semibold text-brand">{partnerCode(p.seq)}</span>
@@ -179,7 +260,81 @@ export function PartnersManager() {
         </Table>
       )}
 
+      {filtered.length > PAGE_SIZE && (
+        <Pagination
+          page={currentPage}
+          pageCount={pageCount}
+          from={currentPage * PAGE_SIZE + 1}
+          to={currentPage * PAGE_SIZE + pageRows.length}
+          total={filtered.length}
+          onPage={setPage}
+        />
+      )}
+
       {showDeletions && <PartnerDeletionsModal onClose={() => setShowDeletions(false)} />}
+    </div>
+  );
+}
+
+function SearchField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="relative w-full sm:w-80">
+      <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+          <circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" />
+        </svg>
+      </span>
+      <input
+        type="search"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Buscar por nombre, correo, código o país…"
+        aria-label="Buscar partners"
+        className="h-11 w-full rounded-xl border border-zinc-200 bg-white pl-10 pr-3.5 text-sm text-zinc-900 outline-none transition-colors placeholder:text-zinc-400 focus:border-brand/40 focus:ring-4 focus:ring-brand/10"
+      />
+    </div>
+  );
+}
+
+function Pagination({
+  page,
+  pageCount,
+  from,
+  to,
+  total,
+  onPage,
+}: {
+  page: number;
+  pageCount: number;
+  from: number;
+  to: number;
+  total: number;
+  onPage: (page: number) => void;
+}) {
+  const step =
+    "inline-flex h-9 items-center rounded-lg border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40";
+
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <p className="text-sm text-zinc-500">
+        Mostrando {from}–{to} de {total}
+      </p>
+      <div className="flex items-center gap-2">
+        <button type="button" className={step} onClick={() => onPage(page - 1)} disabled={page === 0}>
+          Anterior
+        </button>
+        <span className="px-1 text-sm text-zinc-500">
+          Página {page + 1} de {pageCount}
+        </span>
+        <button
+          type="button"
+          className={step}
+          onClick={() => onPage(page + 1)}
+          disabled={page >= pageCount - 1}
+        >
+          Siguiente
+        </button>
+      </div>
     </div>
   );
 }
