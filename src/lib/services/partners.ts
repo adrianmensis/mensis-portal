@@ -178,6 +178,9 @@ export type UpdatePartnerInput = Partial<{
   referred_by: string | null;
   entry_date: string | null;
   process_stage: PartnerStage;
+  // Editable: el contrato puede haberse firmado días antes de cargarlo al
+  // portal, y de esa fecha depende en qué semana cuenta para la meta.
+  signed_on: string | null;
   linkedin_url: string | null;
   category: PartnerCategory | null;
   reference: string | null;
@@ -193,6 +196,7 @@ const EDITABLE_FIELDS = [
   "referred_by",
   "entry_date",
   "process_stage",
+  "signed_on",
   "linkedin_url",
   "category",
   "reference",
@@ -223,6 +227,7 @@ export async function updatePartner(
   if ("process_stage" in patch) patch.process_stage = normalizeStage(patch.process_stage);
   // An empty string would fail the `date` cast; store it as "not set".
   if ("entry_date" in patch) patch.entry_date = patch.entry_date || null;
+  if ("signed_on" in patch) patch.signed_on = patch.signed_on || null;
 
   // auth.users goes first: if it rejects the address (already taken, malformed)
   // the profile row stays untouched.

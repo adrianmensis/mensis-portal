@@ -2,6 +2,13 @@
 
 import type { PartnerWithCount } from "@/lib/services/partners";
 import { daysSince, partnerHealth } from "@/lib/partner-health";
+import {
+  WEEKLY_SIGNED_GOAL,
+  currentWeek,
+  daysLeftInWeek,
+  signedInWeek,
+  weekLabel,
+} from "@/lib/partner-goal";
 import { PARTNER_STAGES, type PartnerStage } from "@/lib/types";
 import { StatCard } from "@/components/ui/stat-card";
 
@@ -63,11 +70,63 @@ const STAGE_DOTS: Record<PartnerStage, string> = {
   "Partner!": "bg-emerald-500",
 };
 
+// Medidor de la meta semanal: un bloque por contrato firmado. Con una meta de
+// 3, los bloques se leen de un vistazo mucho mejor que una barra continua —
+// se ve "van 2, falta 1" sin tener que estimar una proporción.
+function WeeklyGoalMeter({ partners }: { partners: PartnerWithCount[] }) {
+  const week = currentWeek();
+  const signed = signedInWeek(partners, week);
+  const daysLeft = daysLeftInWeek(week);
+  const reached = signed >= WEEKLY_SIGNED_GOAL;
+  // Si se firmó de más, el medidor crece en vez de toparse en la meta.
+  const slots = Math.max(WEEKLY_SIGNED_GOAL, signed);
+
+  return (
+    <div className="rounded-xl border border-zinc-200 bg-white p-5">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">
+            Meta semanal · contratos firmados
+          </p>
+          <p className="mt-3 flex items-baseline gap-2">
+            <span className={`text-4xl font-bold ${reached ? "text-emerald-600" : "text-zinc-900"}`}>
+              {signed}
+            </span>
+            <span className="text-lg font-medium text-zinc-400">de {WEEKLY_SIGNED_GOAL}</span>
+          </p>
+        </div>
+        <p className="text-right text-xs text-zinc-400">
+          <span className="block font-medium text-zinc-600">{weekLabel(week)}</span>
+          {reached
+            ? signed > WEEKLY_SIGNED_GOAL
+              ? `Meta cumplida · ${signed - WEEKLY_SIGNED_GOAL} por encima`
+              : "Meta cumplida"
+            : `Faltan ${WEEKLY_SIGNED_GOAL - signed} · ${daysLeft} día${daysLeft === 1 ? "" : "s"} de la semana`}
+        </p>
+      </div>
+
+      {/* Separación de 2px entre bloques para que se distingan sin líneas. */}
+      <div className="mt-4 flex gap-0.5" role="img" aria-label={`${signed} de ${WEEKLY_SIGNED_GOAL} contratos firmados esta semana`}>
+        {Array.from({ length: slots }, (_, i) => (
+          <span
+            key={i}
+            className={`h-3 flex-1 rounded ${
+              i < signed ? (reached ? "bg-emerald-500" : "bg-brand") : "bg-zinc-100"
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function PartnersOverview({
+  partners,
   stats,
   stageFilter,
   onStageFilter,
 }: {
+  partners: PartnerWithCount[];
   stats: PartnerStats;
   stageFilter: PartnerStage | null;
   onStageFilter: (stage: PartnerStage | null) => void;
@@ -76,6 +135,7 @@ export function PartnersOverview({
 
   return (
     <div className="flex flex-col gap-4">
+      <WeeklyGoalMeter partners={partners} />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Partners"

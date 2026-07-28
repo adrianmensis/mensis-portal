@@ -60,6 +60,9 @@ export type Profile = {
   referred_by: string | null;
   entry_date: string | null;
   process_stage: PartnerStage | null;
+  // Fecha de firma del contrato ("YYYY-MM-DD"). La pone la base al llegar a
+  // "Partner!" y alimenta la meta semanal (ver lib/partner-goal).
+  signed_on: string | null;
   linkedin_url: string | null;
   category: PartnerCategory | null;
   reference: string | null;

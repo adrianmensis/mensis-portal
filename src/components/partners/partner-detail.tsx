@@ -88,6 +88,7 @@ function Content({ partner, reload }: { partner: PartnerWithCount; reload: () =>
     isPartnerStage(partner.process_stage) ? partner.process_stage : DEFAULT_PARTNER_STAGE,
   );
   const [entryDate, setEntryDate] = useState(partner.entry_date ?? "");
+  const [signedOn, setSignedOn] = useState(partner.signed_on ?? "");
   const [linkedin, setLinkedin] = useState(partner.linkedin_url ?? "");
 
   const [active, setActive] = useState(partner.active);
@@ -105,6 +106,8 @@ function Content({ partner, reload }: { partner: PartnerWithCount; reload: () =>
         phone: phone.trim() || null,
         category: category || null,
         process_stage: stage,
+        // Solo se manda cuando está firmado: en otra etapa la base la limpia.
+        signed_on: stage === "Partner!" ? signedOn || null : null,
         entry_date: entryDate || null,
         linkedin_url: linkedin.trim() || null,
       });
@@ -212,13 +215,30 @@ function Content({ partner, reload }: { partner: PartnerWithCount; reload: () =>
             <Input id="pd-entry" type="date" value={entryDate} onChange={(e) => setEntryDate(e.target.value)} />
           </Field>
 
-          <Field label="Etapa del proceso" htmlFor="pd-stage" className="sm:col-span-2">
+          <Field
+            label="Etapa del proceso"
+            htmlFor="pd-stage"
+            className={stage === "Partner!" ? "" : "sm:col-span-2"}
+          >
             <Select id="pd-stage" value={stage} onChange={(e) => setStage(e.target.value as PartnerStage)}>
               {PARTNER_STAGES.map((s) => (
                 <option key={s} value={s}>{s}</option>
               ))}
             </Select>
           </Field>
+
+          {/* La fecha decide en qué semana cuenta para la meta, así que tiene
+              que poder corregirse cuando el contrato se firmó antes de cargarlo. */}
+          {stage === "Partner!" && (
+            <Field label="Fecha de firma del contrato" htmlFor="pd-signed">
+              <Input
+                id="pd-signed"
+                type="date"
+                value={signedOn}
+                onChange={(e) => setSignedOn(e.target.value)}
+              />
+            </Field>
+          )}
 
           <Field label="Sitio web o LinkedIn" htmlFor="pd-linkedin" className="sm:col-span-2">
             <Input id="pd-linkedin" type="url" value={linkedin} onChange={(e) => setLinkedin(e.target.value)} placeholder="https://acme.com o https://linkedin.com/in/…" />

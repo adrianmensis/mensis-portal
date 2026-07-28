@@ -44,6 +44,7 @@ const CSV_COLUMNS: CsvColumn<PartnerWithCount>[] = [
   { header: "País", value: (p) => countryByCode(p.country)?.name ?? p.country },
   { header: "Teléfono", value: (p) => p.phone },
   { header: "Fecha de ingreso", value: (p) => p.entry_date },
+  { header: "Fecha de firma", value: (p) => p.signed_on },
   { header: "Sitio web o LinkedIn", value: (p) => p.linkedin_url },
   { header: "Referido por", value: (p) => p.referred_by },
   { header: "Referencia", value: (p) => p.reference },
@@ -128,7 +129,12 @@ export function PartnersManager() {
       {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-500">{error}</p>}
 
       {partners && partners.length > 0 && (
-        <PartnersOverview stats={stats} stageFilter={stageFilter} onStageFilter={applyStageFilter} />
+        <PartnersOverview
+          partners={partners}
+          stats={stats}
+          stageFilter={stageFilter}
+          onStageFilter={applyStageFilter}
+        />
       )}
 
       {!loading && partners && partners.length === 0 && (
