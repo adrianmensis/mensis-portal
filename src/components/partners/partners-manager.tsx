@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { api } from "@/lib/api/client";
 import { useResource } from "@/lib/hooks/use-resource";
 import { downloadCsv, stampedFilename, toCsv, type CsvColumn } from "@/lib/csv";
-import { fmtDate, partnerCode } from "@/lib/format";
+import { partnerCode } from "@/lib/format";
 import { countryByCode, countryLabel } from "@/lib/countries";
 import { partnerHealth, HEALTH_LABELS } from "@/lib/partner-health";
 import {
@@ -30,7 +30,7 @@ import { PartnerStatusToggle } from "./partner-status-toggle";
 // Filas por página. La lista completa ya viene del API y se pagina en el
 // cliente: con la red actual (decenas) sobra, y así el panel, el buscador y la
 // descarga siguen viendo el total sin pedir nada extra.
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 15;
 
 // Columnas del CSV. Van más campos que en la tabla: el archivo es para
 // trabajarlo fuera (Excel, reportes), no para leerlo en pantalla.
@@ -177,8 +177,6 @@ export function PartnersManager() {
             <Th>Categoría</Th>
             <Th>País</Th>
             <Th>Teléfono</Th>
-            <Th>Ingreso</Th>
-            <Th>Enlace</Th>
             <Th>Salud</Th>
             <Th>Estado</Th>
           </THead>
@@ -227,25 +225,8 @@ export function PartnersManager() {
                 </Td>
                 <Td className="text-zinc-500">{countryLabel(p.country)}</Td>
                 <Td className="text-zinc-500">{p.phone ?? "—"}</Td>
-                <Td className="text-zinc-500">{p.entry_date ? fmtDate(p.entry_date) : "—"}</Td>
-                <Td>
-                  {p.linkedin_url ? (
-                    <a
-                      href={p.linkedin_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      className="inline-flex items-center gap-1 font-medium text-brand transition-colors hover:underline"
-                    >
-                      Ver enlace
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M7 17 17 7" /><path d="M7 7h10v10" />
-                      </svg>
-                    </a>
-                  ) : (
-                    <span className="text-zinc-400">—</span>
-                  )}
-                </Td>
+                {/* Fecha de ingreso y enlace viven en la ficha del partner: en
+                    la tabla solo alargaban la fila. */}
                 <Td>
                   <PartnerHealthBadge partner={p} />
                 </Td>
