@@ -103,7 +103,7 @@ export function PartnersManager() {
       <PageHeader
         title="Partners"
         subtitle={
-          partners ? `${partners.length} partner${partners.length === 1 ? "" : "s"} in the network.` : undefined
+          partners ? `${partners.length} partner${partners.length === 1 ? "" : "s"} en la red.` : undefined
         }
         action={
           <div className="flex items-center gap-2">
@@ -124,7 +124,7 @@ export function PartnersManager() {
         }
       />
 
-      {loading && <LoadingRow label="Loading partners…" />}
+      {loading && <LoadingRow label="Cargando partners…" />}
       {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-500">{error}</p>}
 
       {partners && partners.length > 0 && (
@@ -133,8 +133,8 @@ export function PartnersManager() {
 
       {!loading && partners && partners.length === 0 && (
         <EmptyState
-          message="No partners yet."
-          action={<CreatePartnerModal onCreated={reload} label="Create your first partner" />}
+          message="Todavía no hay partners."
+          action={<CreatePartnerModal onCreated={reload} label="Crear el primer partner" />}
         />
       )}
 

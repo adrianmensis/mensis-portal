@@ -120,7 +120,7 @@ function CopyMessageButton({ created }: { created: Created }) {
 
 export function CreatePartnerModal({
   onCreated,
-  label = "+ New partner",
+  label = "+ Nuevo partner",
   variant = "primary",
 }: {
   onCreated?: () => void;
@@ -164,7 +164,7 @@ export function CreatePartnerModal({
         setCreated({ ...res, full_name: input.full_name });
         onCreated?.();
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to create partner.");
+        setError(err instanceof Error ? err.message : "No se pudo crear el partner.");
       }
     });
   }
@@ -178,8 +178,8 @@ export function CreatePartnerModal({
       <Modal
         open={open}
         onClose={closeForm}
-        title="New partner"
-        subtitle="Capture the partner's intake details."
+        title="Nuevo partner"
+        subtitle="Carga los datos de alta del partner."
       >
         <form onSubmit={onSubmit} className="grid gap-5 sm:grid-cols-2">
           <TextField label="Nombre completo *" name="full_name" required placeholder="María Gómez" wrapperClassName="sm:col-span-2" />
@@ -215,14 +215,14 @@ export function CreatePartnerModal({
 
           <div className="sm:col-span-2 mt-2 flex items-center gap-3">
             <Button type="submit" disabled={pending} className="px-6">
-              {pending ? "Creating…" : "Create partner"}
+              {pending ? "Creando…" : "Crear partner"}
             </Button>
             <button
               type="button"
               onClick={closeForm}
               className="text-sm font-medium text-zinc-500 transition-colors hover:text-zinc-800"
             >
-              Cancel
+              Cancelar
             </button>
           </div>
         </form>

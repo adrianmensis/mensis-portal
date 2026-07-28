@@ -49,7 +49,7 @@ export function PartnerStatusToggle({
 
   return (
     <div className="flex items-center gap-2">
-      <Switch checked={val} onChange={toggle} disabled={pending} label="Toggle active" />
+      <Switch checked={val} onChange={toggle} disabled={pending} label="Activar o desactivar partner" />
       <span className={`text-xs font-medium ${val ? "text-emerald-600" : "text-zinc-400"}`}>
         {val ? "Activo" : "Inactivo"}
       </span>

@@ -254,7 +254,7 @@ function Content({ partner, reload }: { partner: PartnerWithCount; reload: () =>
               Al desactivarla, el partner deja de poder iniciar sesión.
             </p>
           </div>
-          <Switch checked={active} onChange={toggleActive} label="Toggle active" />
+          <Switch checked={active} onChange={toggleActive} label="Activar o desactivar partner" />
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-4 border-t border-zinc-100 pt-5">
