@@ -29,6 +29,16 @@ export function fmtCurrency(n: number) {
   }).format(n);
 }
 
+// Monto abreviado: "$90.7K". Para lugares angostos —el centro de una dona— donde
+// la cifra completa no entra. El monto exacto siempre se muestra al lado.
+export function fmtCurrencyCompact(n: number) {
+  if (Math.abs(n) < 1000) return fmtCurrency(n);
+  return `$${new Intl.NumberFormat("en-US", {
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(n)}`;
+}
+
 export function fmtDate(s: string) {
   // Date-only strings (YYYY-MM-DD) are parsed as local time to avoid an
   // off-by-one day in timezones behind UTC.

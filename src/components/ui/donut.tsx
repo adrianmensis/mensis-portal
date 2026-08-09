@@ -8,9 +8,13 @@
 export type DonutSlice = {
   key: string;
   label: string;
+  // Lo que mide la porción. Puede ser un conteo o un monto.
   value: number;
   color: string;
-  // Texto secundario de la leyenda (p. ej. el monto anual).
+  // Cómo se escribe ese valor en la leyenda. Sin esto se muestra crudo, que
+  // sirve para conteos pero no para plata.
+  display?: string;
+  // Texto secundario de la leyenda (el monto, o cuántas oportunidades son).
   note?: string;
 };
 
@@ -27,15 +31,25 @@ const GAP = 1.4; // separación entre porciones, en unidades del viewBox
 export function Donut({
   slices,
   total,
+  centerValue,
   centerLabel,
   size = 148,
+  layout = "row",
 }: {
   slices: DonutSlice[];
+  // Base de las proporciones. Puede ser un conteo o un monto: la dona no
+  // distingue, solo reparte el anillo.
   total: number;
+  // Lo que va en el agujero. Se pasa ya formateado porque no siempre es el
+  // total crudo — con montos va abreviado para que entre.
+  centerValue: string;
   centerLabel: string;
   size?: number;
+  // "row" pone la leyenda al lado; "column", debajo. En una tarjeta angosta la
+  // leyenda al lado se queda sin ancho y empieza a cortar las etiquetas.
+  layout?: "row" | "column";
 }) {
-  const shown = slices.filter((s) => s.value > 0);
+  const shown = total > 0 ? slices.filter((s) => s.value > 0) : [];
   // Con una sola porción no hay nada que separar: el hueco quedaría como una
   // muesca suelta en un anillo entero.
   const gap = shown.length > 1 ? GAP : 0;
@@ -53,7 +67,13 @@ export function Donut({
   });
 
   return (
-    <div className="flex items-center gap-5">
+    <div
+      className={
+        layout === "column"
+          ? "flex flex-col items-center gap-4"
+          : "flex items-center gap-5"
+      }
+    >
       <div className="relative shrink-0" style={{ width: size, height: size }}>
         <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
           <circle cx="50" cy="50" r={RADIUS} fill="none" stroke="#f4f4f5" strokeWidth="13" />
@@ -79,8 +99,13 @@ export function Donut({
           })}
         </svg>
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-2xl font-bold leading-none tracking-tight text-zinc-900">
-            {total}
+          {/* El agujero es angosto: una cifra larga se sale del anillo. */}
+          <span
+            className={`font-bold leading-none tracking-tight text-zinc-900 ${
+              centerValue.length > 5 ? "text-xl" : "text-2xl"
+            }`}
+          >
+            {centerValue}
           </span>
           <span className="mt-1 text-[10px] font-medium uppercase tracking-widest text-zinc-400">
             {centerLabel}
@@ -88,7 +113,11 @@ export function Donut({
         </div>
       </div>
 
-      <ul className="flex min-w-0 flex-1 flex-col gap-2">
+      <ul
+        className={`flex min-w-0 flex-col gap-2 ${
+          layout === "column" ? "w-full" : "flex-1"
+        }`}
+      >
         {slices.map((s) => (
           <li key={s.key} className="flex items-baseline justify-between gap-3">
             <span className="flex min-w-0 items-center gap-2">
@@ -100,7 +129,9 @@ export function Donut({
               <span className="truncate text-xs text-zinc-600">{s.label}</span>
             </span>
             <span className="flex shrink-0 items-baseline gap-2">
-              <span className="text-xs font-semibold text-zinc-900">{s.value}</span>
+              <span className="text-xs font-semibold text-zinc-900">
+                {s.display ?? s.value}
+              </span>
               {s.note && <span className="text-[11px] text-zinc-400">{s.note}</span>}
             </span>
           </li>

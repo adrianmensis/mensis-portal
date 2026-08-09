@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { api } from "@/lib/api/client";
 import { useResource } from "@/lib/hooks/use-resource";
-import { fmtCurrency, fmtDate, opportunityCode } from "@/lib/format";
+import { fmtCurrency } from "@/lib/format";
 import { commission } from "@/lib/pricing";
 import { WEEKLY_SIGNED_GOAL, signedInWeek } from "@/lib/partner-goal";
 import {
@@ -16,14 +16,13 @@ import {
 } from "@/lib/week";
 import { PageHeader } from "@/components/ui/page-header";
 import { MoneyTile } from "@/components/ui/money-tile";
-import { StageBadge } from "@/components/ui/stage-badge";
 import { Button } from "@/components/ui/button";
 import { LoadingRow } from "@/components/ui/spinner";
 import { CreatePartnerModal } from "@/components/partners/create-partner-modal";
 import { canManagePartners, isAdminRole } from "@/lib/auth/permissions";
 import type { Role } from "@/lib/types";
 import type { DashboardData } from "@/lib/services/dashboard";
-import { StageFunnel } from "./stage-funnel";
+import { LeadsCard, SalesFunnel } from "./stage-funnel";
 import { WeekTile } from "./week-tile";
 import { OriginBreakdown, RegionBreakdown } from "./breakdown-cards";
 
@@ -174,14 +173,23 @@ function Content({
         />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <StageFunnel counts={data.counts} values={data.values} />
-        <Recent data={data} isAdmin={isAdmin} />
-        <RegionBreakdown opportunities={opps} />
-        {/* El corte Mensis / red solo tiene sentido con los dos a la vista, y
-            eso es lo que ve un admin: al resto RLS ya le esconde lo de Mensis. */}
-        {isMensisStaff && <OriginBreakdown opportunities={opps} />}
+      {/* Los leads aparte: son la boca del embudo, no un piso más. */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <LeadsCard counts={data.counts} values={data.values} />
+        <div className="lg:col-span-2">
+          <SalesFunnel counts={data.counts} values={data.values} />
+        </div>
       </div>
+
+      {/* El corte Mensis / red solo tiene sentido con los dos a la vista, y eso
+          es lo que ve un admin: al resto RLS ya le esconde lo de Mensis. */}
+      {isMensisStaff && (
+        <div className="grid gap-4 lg:grid-cols-3">
+          <OriginBreakdown opportunities={opps} />
+        </div>
+      )}
+
+      <RegionBreakdown opportunities={opps} />
     </div>
   );
 }
@@ -208,49 +216,5 @@ function GoalMeter({ signed }: { signed: number }) {
         />
       ))}
     </div>
-  );
-}
-
-function Recent({ data, isAdmin }: { data: DashboardData; isAdmin: boolean }) {
-  return (
-    <section className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-6">
-      <div className="flex items-baseline justify-between gap-3">
-        <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">
-          Últimas oportunidades
-        </p>
-        <Link
-          href={isAdmin ? "/app/pipeline" : "/app/opportunities"}
-          className="text-xs font-semibold text-brand hover:underline"
-        >
-          Ver todas
-        </Link>
-      </div>
-
-      {data.recent.length === 0 ? (
-        <p className="py-6 text-center text-sm text-zinc-400">Todavía no hay oportunidades.</p>
-      ) : (
-        <ul className="flex flex-col divide-y divide-zinc-100">
-          {data.recent.map((o) => (
-            <li key={o.id}>
-              <Link
-                href={`/app/opportunities/${o.id}`}
-                className="-mx-2 flex items-center justify-between gap-3 rounded-lg px-2 py-2.5 transition-colors hover:bg-zinc-50"
-              >
-                <span className="min-w-0">
-                  <span className="block truncate text-sm font-medium text-zinc-800">
-                    {o.client_name}
-                  </span>
-                  <span className="mt-0.5 block text-xs text-zinc-400">
-                    <span className="font-mono">{opportunityCode(o.seq)}</span> ·{" "}
-                    {fmtDate(o.created_at)} · {fmtCurrency(o.estimated_value ?? 0)}
-                  </span>
-                </span>
-                <StageBadge stage={o.stage} />
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
   );
 }

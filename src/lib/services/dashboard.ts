@@ -15,6 +15,7 @@ export type OpportunityPulse = {
   created_at: string;
   lost_at: string | null;
   country: string | null;
+  stage: OpportunityStage;
   origin: OpportunityOrigin;
   value: number;
 };
@@ -31,7 +32,6 @@ export type DashboardData = {
   counts: Record<OpportunityStage, number>;
   values: Record<OpportunityStage, number>; // monto anual acumulado por etapa
   pulse: { opportunities: OpportunityPulse[]; partners: PartnerPulse[] };
-  recent: Opportunity[];
 };
 
 const emptyByStage = () =>
@@ -100,11 +100,11 @@ export async function getDashboard(
         created_at: o.created_at,
         lost_at: o.closed_lost_at,
         country: o.country,
+        stage: o.stage,
         origin: mensisIds.has(o.partner_id) ? ("mensis" as const) : ("partner" as const),
         value: o.estimated_value ?? 0,
       })),
       partners,
     },
-    recent: opps.slice(0, 5),
   };
 }
