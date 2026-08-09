@@ -37,22 +37,29 @@ export function MoneyTile({
   value,
   sub,
   tone = "zinc",
+  compact = false,
   footer,
 }: {
   label: string;
   value: string;
   sub?: string;
   tone?: MoneyTone;
+  // Versión chica, para cuando la tarjeta comparte fila con varias más.
+  compact?: boolean;
   footer?: ReactNode;
 }) {
   const t = TONES[tone];
   return (
-    <div className={`flex flex-col rounded-2xl border p-5 ${t.box}`}>
+    <div className={`flex flex-col rounded-2xl border ${compact ? "p-4" : "p-5"} ${t.box}`}>
       <p className={`text-[11px] font-semibold uppercase tracking-widest ${t.label}`}>{label}</p>
-      <p className={`mt-3 text-[2.1rem] font-bold leading-none tracking-tight ${t.value}`}>
+      <p
+        className={`mt-2 font-bold leading-none tracking-tight ${t.value} ${
+          compact ? "text-2xl" : "mt-3 text-[2.1rem]"
+        }`}
+      >
         {value}
       </p>
-      {sub && <p className="mt-2 text-xs text-zinc-400">{sub}</p>}
+      {sub && <p className={`mt-2 text-zinc-400 ${compact ? "text-[11px]" : "text-xs"}`}>{sub}</p>}
       {footer && <div className="mt-3">{footer}</div>}
     </div>
   );

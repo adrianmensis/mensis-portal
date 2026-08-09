@@ -13,7 +13,7 @@ import { CreatePartnerModal } from "@/components/partners/create-partner-modal";
 import { canManagePartners, isAdminRole } from "@/lib/auth/permissions";
 import type { Role } from "@/lib/types";
 import type { DashboardData } from "@/lib/services/dashboard";
-import { LeadsCard, SalesFunnel } from "./stage-funnel";
+import { SalesFunnel } from "./stage-funnel";
 import { OriginBreakdown, RegionBreakdown } from "./breakdown-cards";
 
 export function DashboardView({
@@ -69,52 +69,57 @@ function Content({
   const activas = data.total_opportunities - data.counts.client - data.counts.closed_lost;
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* La plata */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <MoneyTile
-          label="Pipeline activo"
-          value={fmtCurrency(data.open_value)}
-          tone="brand"
-          sub={`${activas} oportunidad${activas === 1 ? "" : "es"} en juego · sin cerradas ni perdidas`}
-        />
-        <MoneyTile
-          label="Clientes cerrados"
-          value={fmtCurrency(data.won_value)}
-          tone="emerald"
-          sub={`${data.counts.client} cerrada${data.counts.client === 1 ? "" : "s"} · ${fmtCurrency(
-            commission(data.won_value),
-          )} de comisión`}
-        />
-        <MoneyTile
-          label="Perdido"
-          value={fmtCurrency(data.lost_value)}
-          tone="red"
-          sub={`${data.counts.closed_lost} oportunidad${
-            data.counts.closed_lost === 1 ? "" : "es"
-          } cerrada${data.counts.closed_lost === 1 ? "" : "s"} perdida${
-            data.counts.closed_lost === 1 ? "" : "s"
-          }`}
-        />
+    // El embudo manda: se queda con la izquierda y crece a lo alto. Todo lo
+    // demás se apila chico a la derecha.
+    <div className="grid gap-4 lg:grid-cols-12">
+      <div className="lg:col-span-5">
+        <SalesFunnel counts={data.counts} values={data.values} />
       </div>
 
-      {/* Los leads aparte: son la boca del embudo, no un piso más. */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        <LeadsCard counts={data.counts} values={data.values} />
-        <div className="lg:col-span-2">
-          <SalesFunnel counts={data.counts} values={data.values} />
+      <div className="flex flex-col gap-4 lg:col-span-7">
+        <div className="grid gap-4 sm:grid-cols-3">
+          <MoneyTile
+            label="Pipeline activo"
+            value={fmtCurrency(data.open_value)}
+            tone="brand"
+            compact
+            sub={`${activas} en juego`}
+          />
+          <MoneyTile
+            label="Cerrado"
+            value={fmtCurrency(data.won_value)}
+            tone="emerald"
+            compact
+            sub={`${data.counts.client} cliente${data.counts.client === 1 ? "" : "s"} · ${fmtCurrency(
+              commission(data.won_value),
+            )} de comisión`}
+          />
+          <MoneyTile
+            label="Perdido"
+            value={fmtCurrency(data.lost_value)}
+            tone="red"
+            compact
+            sub={`${data.counts.closed_lost} cerrada${
+              data.counts.closed_lost === 1 ? "" : "s"
+            } perdida${data.counts.closed_lost === 1 ? "" : "s"}`}
+          />
         </div>
+
+        {/* El corte Mensis / red solo tiene sentido con los dos a la vista, y
+            eso es lo que ve un admin: al resto RLS ya le esconde lo de Mensis. */}
+        {isMensisStaff && (
+          <div className="flex flex-col gap-2">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">
+              Por origen · Mensis vs. red
+            </p>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <OriginBreakdown opportunities={opps} />
+            </div>
+          </div>
+        )}
+
+        <RegionBreakdown opportunities={opps} />
       </div>
-
-      {/* El corte Mensis / red solo tiene sentido con los dos a la vista, y eso
-          es lo que ve un admin: al resto RLS ya le esconde lo de Mensis. */}
-      {isMensisStaff && (
-        <div className="grid gap-4 lg:grid-cols-3">
-          <OriginBreakdown opportunities={opps} />
-        </div>
-      )}
-
-      <RegionBreakdown opportunities={opps} />
     </div>
   );
 }

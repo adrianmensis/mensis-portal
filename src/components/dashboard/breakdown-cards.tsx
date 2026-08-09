@@ -6,17 +6,24 @@ import { Donut, DONUT_COLORS, DONUT_NEUTRAL, type DonutSlice } from "@/component
 function Card({
   title,
   hint,
+  compact = false,
   children,
 }: {
   title: string;
   hint: string;
+  compact?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <section className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-6">
-      <div className="flex items-baseline justify-between gap-3">
+    <section
+      className={`flex flex-col rounded-2xl border border-zinc-200 bg-white ${
+        compact ? "gap-3 p-4" : "gap-4 p-6"
+      }`}
+    >
+      {/* En la versión chica el título y la aclaración no entran en una línea. */}
+      <div className={compact ? "" : "flex items-baseline justify-between gap-3"}>
         <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">{title}</p>
-        <span className="text-[11px] text-zinc-400">{hint}</span>
+        <span className={`text-[11px] text-zinc-400 ${compact ? "block" : ""}`}>{hint}</span>
       </div>
       {children}
     </section>
@@ -50,7 +57,7 @@ export function RegionBreakdown({ opportunities }: { opportunities: OpportunityP
   })).filter((s) => s.value > 0);
 
   return (
-    <Card title="Por región" hint="oportunidades · monto anual">
+    <Card title="Por región" hint="oportunidades · monto anual" compact>
       {opportunities.length === 0 ? (
         <Empty />
       ) : (
@@ -59,6 +66,7 @@ export function RegionBreakdown({ opportunities }: { opportunities: OpportunityP
           total={opportunities.length}
           centerValue={String(opportunities.length)}
           centerLabel="total"
+          size={112}
         />
       )}
     </Card>
@@ -70,9 +78,9 @@ export function RegionBreakdown({ opportunities }: { opportunities: OpportunityP
 // partner. Va en tres cortes porque no es lo mismo tener leads que tener
 // clientes: el reparto cambia mucho de un extremo al otro del embudo.
 const ORIGIN_GROUPS = [
-  { key: "leads", title: "Origen · Leads", match: (s: Group) => s === "leads" },
-  { key: "proceso", title: "Origen · En proceso", match: (s: Group) => s === "proceso" },
-  { key: "ganadas", title: "Origen · Ganadas", match: (s: Group) => s === "ganadas" },
+  { key: "leads", title: "Leads", match: (s: Group) => s === "leads" },
+  { key: "proceso", title: "En proceso", match: (s: Group) => s === "proceso" },
+  { key: "ganadas", title: "Ganadas", match: (s: Group) => s === "ganadas" },
 ] as const;
 
 type Group = "leads" | "proceso" | "ganadas" | "perdidas";
@@ -92,12 +100,11 @@ function OriginDonut({
   const slices: DonutSlice[] = [
     {
       key: "partner",
-      // Corto a propósito: la leyenda vive en una tarjeta de un tercio de
-      // ancho, y "Red de partners" se cortaba a la mitad.
+      // Corto a propósito: estas tarjetas son angostas y "Red de partners" se
+      // cortaba a la mitad.
       label: "Partners",
       value: sum(partner),
       display: fmtCurrency(sum(partner)),
-      note: `${partner.length} opp${partner.length === 1 ? "" : "s"}`,
       color: DONUT_COLORS[0],
     },
     {
@@ -105,13 +112,16 @@ function OriginDonut({
       label: "Mensis",
       value: sum(mensis),
       display: fmtCurrency(sum(mensis)),
-      note: `${mensis.length} opp${mensis.length === 1 ? "" : "s"}`,
       color: DONUT_COLORS[1],
     },
   ];
 
   return (
-    <Card title={title} hint={`${rows.length} oportunidad${rows.length === 1 ? "" : "es"}`}>
+    <Card
+      title={title}
+      hint={`${rows.length} oportunidad${rows.length === 1 ? "" : "es"}`}
+      compact
+    >
       {rows.length === 0 ? (
         <Empty />
       ) : (
@@ -120,7 +130,7 @@ function OriginDonut({
           total={total}
           centerValue={fmtCurrencyCompact(total)}
           centerLabel="anual"
-          size={132}
+          size={104}
           layout="column"
         />
       )}
