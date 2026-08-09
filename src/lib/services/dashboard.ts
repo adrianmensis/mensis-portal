@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Opportunity, OpportunityStage, Profile, Role } from "@/lib/types";
-import { ALL_OPPORTUNITY_STAGES, ASSIGNABLE_PARTNER_ROLES } from "@/lib/types";
-import { isAdminRole, seesNetworkPipeline } from "@/lib/auth/permissions";
+import { ALL_OPPORTUNITY_STAGES } from "@/lib/types";
+import { isAdminRole } from "@/lib/auth/permissions";
 
 // Quién registró la oportunidad: Mensis (una cuenta admin) o la red. Es la
 // misma frontera que usa la base para esconderle a un partner_admin los
@@ -9,29 +9,23 @@ import { isAdminRole, seesNetworkPipeline } from "@/lib/auth/permissions";
 export type OpportunityOrigin = "mensis" | "partner";
 
 // Una fila liviana por oportunidad, para los cortes que hace el cliente: por
-// semana, por región y por origen. Las fechas van crudas a propósito — el
-// recorte semanal se hace en hora local, y el servidor corre en UTC.
+// región y por origen.
 export type OpportunityPulse = {
-  created_at: string;
-  lost_at: string | null;
   country: string | null;
   stage: OpportunityStage;
   origin: OpportunityOrigin;
   value: number;
 };
 
-export type PartnerPulse = { joined: string; signed_on: string | null };
-
 export type DashboardData = {
   role: Role;
-  partner_count: number;
   total_opportunities: number;
   won_value: number; // value of opportunities that reached "client"
   open_value: number; // value still in the active funnel (not won, not lost)
   lost_value: number; // value of opportunities closed as lost
   counts: Record<OpportunityStage, number>;
   values: Record<OpportunityStage, number>; // monto anual acumulado por etapa
-  pulse: { opportunities: OpportunityPulse[]; partners: PartnerPulse[] };
+  pulse: { opportunities: OpportunityPulse[] };
 };
 
 const emptyByStage = () =>
@@ -72,23 +66,8 @@ export async function getDashboard(
     for (const row of (staff ?? []) as { id: string }[]) mensisIds.add(row.id);
   }
 
-  let partner_count = 0;
-  let partners: PartnerPulse[] = [];
-  if (seesNetworkPipeline(profile.role)) {
-    const { data: rows } = await supabase
-      .from("profiles")
-      .select("created_at, entry_date, signed_on")
-      .in("role", [...ASSIGNABLE_PARTNER_ROLES]);
-    const list = (rows ?? []) as Pick<Profile, "created_at" | "entry_date" | "signed_on">[];
-    partner_count = list.length;
-    // Un partner "entra" en su fecha de ingreso; si no se cargó, en el alta de
-    // la cuenta. Mismo criterio que usa el módulo de Partners.
-    partners = list.map((p) => ({ joined: p.entry_date ?? p.created_at, signed_on: p.signed_on }));
-  }
-
   return {
     role: profile.role,
-    partner_count,
     total_opportunities: opps.length,
     won_value,
     open_value,
@@ -97,14 +76,11 @@ export async function getDashboard(
     values,
     pulse: {
       opportunities: opps.map((o) => ({
-        created_at: o.created_at,
-        lost_at: o.closed_lost_at,
         country: o.country,
         stage: o.stage,
         origin: mensisIds.has(o.partner_id) ? ("mensis" as const) : ("partner" as const),
         value: o.estimated_value ?? 0,
       })),
-      partners,
     },
   };
 }
