@@ -55,14 +55,22 @@ export function PipelineManager({ role, viewerId }: { role: Role; viewerId: stri
   // arriba y el de abajo cuentan la misma historia.
   const scoped = (opps ?? []).filter((o) => !partner || o.partner_id === partner);
   const filtered = scoped.filter((o) => !stage || o.stage === stage);
-  const totalMonto = filtered.reduce((s, o) => s + (o.estimated_value ?? 0), 0);
-  const totalComision = filtered.reduce((s, o) => s + commission(o.estimated_value ?? 0), 0);
+  // Los montos suman lo que sigue en juego: una oportunidad perdida no es
+  // dinero, así que queda fuera del total (y se avisa cuántas se dejaron).
+  const enJuego = filtered.filter((o) => o.stage !== "closed_lost");
+  const perdidas = filtered.length - enJuego.length;
+  const totalMonto = enJuego.reduce((s, o) => s + (o.estimated_value ?? 0), 0);
+  const totalComision = enJuego.reduce((s, o) => s + commission(o.estimated_value ?? 0), 0);
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Oportunidades"
-        subtitle={`${filtered.length} oportunidad${filtered.length === 1 ? "" : "es"} · ${fmtCurrency(totalMonto)} monto anual · ${fmtCurrency(totalComision)} comisión`}
+        subtitle={
+          `${filtered.length} oportunidad${filtered.length === 1 ? "" : "es"} · ` +
+          `${fmtCurrency(totalMonto)} monto anual · ${fmtCurrency(totalComision)} comisión` +
+          (perdidas ? ` · ${perdidas} perdida${perdidas === 1 ? "" : "s"} sin contar` : "")
+        }
         action={
           <div className="flex items-center gap-2">
             {/* Baja lo filtrado (partner + estado), no toda la red. */}
