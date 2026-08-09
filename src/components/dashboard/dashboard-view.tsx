@@ -20,11 +20,12 @@ import { StageBadge } from "@/components/ui/stage-badge";
 import { Button } from "@/components/ui/button";
 import { LoadingRow } from "@/components/ui/spinner";
 import { CreatePartnerModal } from "@/components/partners/create-partner-modal";
-import { canManagePartners } from "@/lib/auth/permissions";
+import { canManagePartners, isAdminRole } from "@/lib/auth/permissions";
 import type { Role } from "@/lib/types";
 import type { DashboardData } from "@/lib/services/dashboard";
 import { StageFunnel } from "./stage-funnel";
 import { WeekTile } from "./week-tile";
+import { OriginBreakdown, RegionBreakdown } from "./breakdown-cards";
 
 export function DashboardView({
   role,
@@ -36,6 +37,8 @@ export function DashboardView({
   // Both admin and partner_admin run the network; the stats they see are
   // narrowed by RLS, not by this flag.
   const isAdmin = canManagePartners(role);
+  // Solo el staff de Mensis ve sus propios negocios junto a los de la red.
+  const isMensisStaff = isAdminRole(role);
   const { data, loading, error, reload } = useResource(() => api.dashboard());
 
   const week = currentWeek();
@@ -62,7 +65,9 @@ export function DashboardView({
       {loading && <LoadingRow label="Cargando dashboard…" />}
       {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-500">{error}</p>}
 
-      {data && <Content data={data} isAdmin={isAdmin} week={week} />}
+      {data && (
+        <Content data={data} isAdmin={isAdmin} isMensisStaff={isMensisStaff} week={week} />
+      )}
     </div>
   );
 }
@@ -70,10 +75,12 @@ export function DashboardView({
 function Content({
   data,
   isAdmin,
+  isMensisStaff,
   week,
 }: {
   data: DashboardData;
   isAdmin: boolean;
+  isMensisStaff: boolean;
   week: Week;
 }) {
   const prev = previousWeek(week);
@@ -170,6 +177,10 @@ function Content({
       <div className="grid gap-4 lg:grid-cols-2">
         <StageFunnel counts={data.counts} values={data.values} />
         <Recent data={data} isAdmin={isAdmin} />
+        <RegionBreakdown opportunities={opps} />
+        {/* El corte Mensis / red solo tiene sentido con los dos a la vista, y
+            eso es lo que ve un admin: al resto RLS ya le esconde lo de Mensis. */}
+        {isMensisStaff && <OriginBreakdown opportunities={opps} />}
       </div>
     </div>
   );
