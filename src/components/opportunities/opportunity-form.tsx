@@ -12,12 +12,20 @@ import {
   type PlanKey,
   type BillingPeriod,
 } from "@/lib/pricing";
-import { OPPORTUNITY_STAGES, STAGE_LABELS, type OpportunityStage } from "@/lib/types";
+import {
+  INDUSTRIES,
+  INDUSTRY_LABELS,
+  OPPORTUNITY_STAGES,
+  STAGE_LABELS,
+  type Industry,
+  type OpportunityStage,
+} from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { TextField } from "@/components/ui/text-field";
 import { NumberField } from "@/components/ui/number-field";
 import { Select } from "@/components/ui/select";
+import { CountrySelect } from "@/components/ui/country-select";
 import { InfoTooltip } from "@/components/ui/tooltip";
 import { PlanPicker } from "./plan-picker";
 
@@ -32,6 +40,7 @@ export function OpportunityForm({
   const [twins, setTwins] = useState(0);
   const [collaborators, setCollaborators] = useState(0);
   const [stage, setStage] = useState<OpportunityStage>("lead");
+  const [industry, setIndustry] = useState<Industry | "">("");
   const [plan, setPlan] = useState<PlanKey>("starter");
   const [billing, setBilling] = useState<BillingPeriod>("monthly");
   const [customPrice, setCustomPrice] = useState(0);
@@ -46,6 +55,8 @@ export function OpportunityForm({
     mutate({
       client_name: String(fd.get("client_name") ?? ""),
       website: String(fd.get("website") ?? ""),
+      country: String(fd.get("country") ?? "") || null,
+      industry: industry || null,
       collaborators,
       estimated_avatars: twins,
       plan,
@@ -61,7 +72,24 @@ export function OpportunityForm({
       <div className="grid grid-cols-1 gap-5 text-left sm:grid-cols-2">
         <TextField label="Nombre del cliente *" name="client_name" required placeholder="Acme Corp" wrapperClassName="sm:col-span-2" />
         <TextField label="Web site" name="website" type="url" placeholder="https://acme.com" wrapperClassName="sm:col-span-2" />
-        <div className="flex flex-col gap-1.5 sm:col-span-2">
+        <CountrySelect label="País" name="country" />
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="industry">Industria</Label>
+          <Select
+            id="industry"
+            name="industry"
+            value={industry}
+            onChange={(e) => setIndustry(e.target.value as Industry | "")}
+          >
+            <option value="">Sin especificar</option>
+            {INDUSTRIES.map((i) => (
+              <option key={i} value={i}>
+                {INDUSTRY_LABELS[i]}
+              </option>
+            ))}
+          </Select>
+        </div>
+        <div className="flex flex-col gap-1.5">
           <Label htmlFor="stage">Estado</Label>
           <Select
             id="stage"

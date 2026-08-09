@@ -59,7 +59,7 @@ export function DashboardView({
           <StatCard
             label="Pipeline activo"
             value={fmtCurrency(data.open_value)}
-            sub={`${data.total_opportunities - data.counts.client} activas`}
+            sub={`${data.total_opportunities - data.counts.client - data.counts.closed_lost} activas · ${data.counts.closed_lost} perdidas`}
           />
         </div>
       )}

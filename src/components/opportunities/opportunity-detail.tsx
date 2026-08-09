@@ -7,6 +7,7 @@ import { useResource } from "@/lib/hooks/use-resource";
 import { useToast } from "@/lib/hooks/use-toast";
 import type { OpportunityWithPartner } from "@/lib/services/opportunities";
 import { fmtCurrency, fmtDate, opportunityCode } from "@/lib/format";
+import { COUNTRIES, flagEmoji } from "@/lib/countries";
 import {
   COMMISSION_RATE,
   annualAmount,
@@ -15,11 +16,16 @@ import {
   type BillingPeriod,
 } from "@/lib/pricing";
 import {
+  INDUSTRIES,
+  INDUSTRY_LABELS,
+  LOST_REASON_LABELS,
   STAGE_LABELS,
   VIDEO_PLATFORMS,
   VIDEO_PLATFORM_LABELS,
   stageRequiresClientRequest,
   stageReached,
+  type Industry,
+  type LostReason,
   type Role,
   type VideoPlatform,
 } from "@/lib/types";
@@ -32,6 +38,7 @@ import { NumberField } from "@/components/ui/number-field";
 import { Button } from "@/components/ui/button";
 import { StagePath } from "./stage-path";
 import { PlanPicker } from "./plan-picker";
+import { LostReasonModal } from "./lost-reason-modal";
 
 function Breadcrumb({ code }: { code?: string }) {
   return (
@@ -118,10 +125,12 @@ function Content({
   // A partner_admin reads the whole network but only edits what it registered.
   const canEdit = canEditOpportunity(role, viewerId, opp.partner_id);
   const [saving, setSaving] = useState(false);
+  const [lostOpen, setLostOpen] = useState(false);
 
   // Información de la oportunidad (editable).
   const [clientName, setClientName] = useState(opp.client_name);
   const [website, setWebsite] = useState(opp.website ?? "");
+  const [industry, setIndustry] = useState<Industry | "">(opp.industry ?? "");
   const [collaborators, setCollaborators] = useState(opp.collaborators ?? 0);
   const [avatars, setAvatars] = useState(opp.estimated_avatars ?? 0);
   const [plan, setPlan] = useState<PlanKey>(opp.plan);
@@ -148,18 +157,33 @@ function Content({
       await api.opportunities.update(opp.id, patch);
       toast.success(okMsg);
       reload();
+      return true;
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "No se pudo guardar.");
+      return false;
     } finally {
       setSaving(false);
     }
   }
 
+  async function closeAsLost(reason: LostReason, lostNotes: string | null) {
+    const ok = await save(
+      { stage: "closed_lost", lost_reason: reason, lost_notes: lostNotes },
+      "Oportunidad cerrada como perdida.",
+    );
+    if (ok) setLostOpen(false);
+  }
+
+  const isLost = opp.stage === "closed_lost";
   const gateNote = stageRequiresClientRequest(opp.stage)
     ? null
     : "Requerido para pasar a “Piloto”.";
-  // La solicitud y la provisión aparecen a partir de "Creación de tenant".
-  const showTenantWork = stageReached(opp.stage, "tenant_creation");
+  // La solicitud y la provisión aparecen a partir de "Creación de tenant". Una
+  // oportunidad perdida sale del embudo, pero si alcanzó a llenar la solicitud
+  // se sigue viendo: es parte de la historia del caso.
+  const showTenantWork =
+    stageReached(opp.stage, "tenant_creation") ||
+    (isLost && Boolean(opp.country || opp.contact_name || opp.tenant_url));
 
   return (
     <div className="flex flex-col gap-6">
@@ -180,8 +204,54 @@ function Content({
         stage={opp.stage}
         disabled={!canEdit || saving}
         onSelect={(s) => {
-          if (s !== opp.stage) save({ stage: s }, `Etapa → ${STAGE_LABELS[s]}`);
+          if (s === opp.stage) return;
+          save({ stage: s }, isLost ? `Oportunidad reabierta en “${STAGE_LABELS[s]}”.` : `Etapa → ${STAGE_LABELS[s]}`);
         }}
+        onLost={canEdit ? () => setLostOpen(true) : undefined}
+      />
+
+      {isLost && (
+        <div className="rounded-2xl border border-red-200 bg-red-50/60 p-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-red-500">
+                Cerrada perdida
+                {opp.closed_lost_at ? ` · ${fmtDate(opp.closed_lost_at)}` : ""}
+              </p>
+              <p className="mt-1 text-base font-semibold text-red-800">
+                {opp.lost_reason ? LOST_REASON_LABELS[opp.lost_reason] : "Sin motivo registrado"}
+              </p>
+              {opp.lost_notes && (
+                <p className="mt-1 whitespace-pre-line text-sm text-red-700/80">{opp.lost_notes}</p>
+              )}
+            </div>
+            {canEdit && (
+              <button
+                type="button"
+                onClick={() => setLostOpen(true)}
+                disabled={saving}
+                className="text-xs font-medium text-red-600 underline-offset-2 hover:underline disabled:opacity-60"
+              >
+                Cambiar motivo
+              </button>
+            )}
+          </div>
+          {canEdit && (
+            <p className="mt-3 text-xs text-red-500/80">
+              Para reabrirla, elige una etapa del camino de arriba.
+            </p>
+          )}
+        </div>
+      )}
+
+      <LostReasonModal
+        open={lostOpen}
+        onClose={() => setLostOpen(false)}
+        onConfirm={closeAsLost}
+        clientName={opp.client_name}
+        reason={opp.lost_reason}
+        notes={opp.lost_notes}
+        saving={saving}
       />
 
       {/* Sección 1: Información de la oportunidad (editable) */}
@@ -193,6 +263,32 @@ function Content({
           </Field>
           <Field label="Sitio web" htmlFor="io-web" className="sm:col-span-2">
             <Input id="io-web" type="url" value={website} onChange={(e) => setWebsite(e.target.value)} disabled={!canEdit} placeholder="https://acme.com" />
+          </Field>
+          <Field label="País" htmlFor="io-country">
+            <Select
+              id="io-country"
+              value={country}
+              onChange={(e) => setCountry(e.target.value)}
+              disabled={!canEdit}
+            >
+              <option value="">Sin especificar</option>
+              {COUNTRIES.map((c) => (
+                <option key={c.code} value={c.code}>{flagEmoji(c.code)} {c.name}</option>
+              ))}
+            </Select>
+          </Field>
+          <Field label="Industria" htmlFor="io-industry">
+            <Select
+              id="io-industry"
+              value={industry}
+              onChange={(e) => setIndustry(e.target.value as Industry | "")}
+              disabled={!canEdit}
+            >
+              <option value="">Sin especificar</option>
+              {INDUSTRIES.map((i) => (
+                <option key={i} value={i}>{INDUSTRY_LABELS[i]}</option>
+              ))}
+            </Select>
           </Field>
           <NumberField label="Cantidad de colaboradores" defaultValue={opp.collaborators ?? 0} onValue={setCollaborators} disabled={!canEdit} />
           <NumberField label="Cantidad de gemelos digitales" defaultValue={opp.estimated_avatars ?? 0} onValue={setAvatars} disabled={!canEdit} />
@@ -241,6 +337,8 @@ function Content({
                   {
                     client_name: clientName.trim(),
                     website: website.trim() || null,
+                    country: country || null,
+                    industry: industry || null,
                     collaborators,
                     estimated_avatars: avatars,
                     plan,
@@ -269,9 +367,6 @@ function Content({
           {gateNote && <span className="text-[11px] text-zinc-400">{gateNote}</span>}
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="País de la empresa" htmlFor="cr-country">
-            <Input id="cr-country" value={country} onChange={(e) => setCountry(e.target.value)} disabled={!canEdit} placeholder="México" />
-          </Field>
           <Field label="Plataforma de videollamadas" htmlFor="cr-platform">
             <Select id="cr-platform" value={platform} onChange={(e) => setPlatform(e.target.value as VideoPlatform | "")} disabled={!canEdit}>
               <option value="">Sin especificar</option>
@@ -300,7 +395,6 @@ function Content({
               onClick={() =>
                 save(
                   {
-                    country: country.trim() || null,
                     video_platform: platform || null,
                     requires_pilot: pilot === "" ? null : pilot === "yes",
                     contact_name: contactName.trim() || null,

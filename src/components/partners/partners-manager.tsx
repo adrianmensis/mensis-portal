@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api/client";
 import { useResource } from "@/lib/hooks/use-resource";
-import { downloadCsv, stampedFilename, toCsv, type CsvColumn } from "@/lib/csv";
+import type { CsvColumn } from "@/lib/csv";
 import { partnerCode } from "@/lib/format";
 import { countryByCode, countryLabel } from "@/lib/countries";
 import { partnerHealth, HEALTH_LABELS } from "@/lib/partner-health";
@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingRow } from "@/components/ui/spinner";
 import { Table, THead, Th, TBody, Tr, Td } from "@/components/ui/table";
+import { DownloadButton } from "@/components/ui/download-button";
 import { CreatePartnerModal } from "./create-partner-modal";
 import { PartnerDeletionsModal } from "./partner-deletions-modal";
 import { PartnerHealthBadge } from "./partner-health-badge";
@@ -113,13 +114,7 @@ export function PartnersManager() {
               Eliminados
             </SecondaryAction>
             {/* Baja lo que está filtrado, no solo la página visible. */}
-            <SecondaryAction
-              onClick={() => downloadCsv(stampedFilename("partners"), toCsv(CSV_COLUMNS, filtered))}
-              disabled={filtered.length === 0}
-            >
-              <DownloadIcon />
-              Descargar
-            </SecondaryAction>
+            <DownloadButton prefix="partners" columns={CSV_COLUMNS} rows={filtered} />
             <CreatePartnerModal onCreated={reload} />
           </div>
         }
@@ -344,14 +339,6 @@ function SecondaryAction({
     >
       {children}
     </button>
-  );
-}
-
-function DownloadIcon() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 3v12" /><path d="m7 10 5 5 5-5" /><path d="M4 21h16" />
-    </svg>
   );
 }
 

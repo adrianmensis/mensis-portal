@@ -12,9 +12,15 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingRow } from "@/components/ui/spinner";
 import { StageBadge } from "@/components/ui/stage-badge";
 import { Table, THead, Th, TBody, Tr, Td } from "@/components/ui/table";
-import { OPPORTUNITY_STAGES, STAGE_LABELS, type Role } from "@/lib/types";
+import { INDUSTRY_LABELS, STAGE_LABELS, type OpportunityStage, type Role } from "@/lib/types";
+import { countryByCode, flagEmoji } from "@/lib/countries";
+import { opportunityCsvColumns } from "@/lib/opportunity-csv";
+import { DownloadButton } from "@/components/ui/download-button";
 import { StageSelect } from "./stage-select";
 import { CreateOpportunityModal } from "@/components/opportunities/create-opportunity-modal";
+import { StageSummary } from "@/components/opportunities/stage-summary";
+
+const CSV_COLUMNS = opportunityCsvColumns({ withPartner: true });
 
 const selectClass =
   "h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-700 outline-none focus:border-brand/40 focus:ring-4 focus:ring-brand/5";
@@ -37,7 +43,7 @@ export function PipelineManager({ role, viewerId }: { role: Role; viewerId: stri
     api.opportunities.list({ withPartner: true }),
   );
   const [partner, setPartner] = useState("");
-  const [stage, setStage] = useState("");
+  const [stage, setStage] = useState<OpportunityStage | null>(null);
 
   const partners = useMemo(() => {
     const map = new Map<string, string>();
@@ -45,9 +51,10 @@ export function PipelineManager({ role, viewerId }: { role: Role; viewerId: stri
     return [...map.entries()].map(([id, name]) => ({ id, name }));
   }, [opps]);
 
-  const filtered = (opps ?? []).filter(
-    (o) => (!partner || o.partner_id === partner) && (!stage || o.stage === stage),
-  );
+  // El panel por estado cuenta dentro del partner elegido, así el filtro de
+  // arriba y el de abajo cuentan la misma historia.
+  const scoped = (opps ?? []).filter((o) => !partner || o.partner_id === partner);
+  const filtered = scoped.filter((o) => !stage || o.stage === stage);
   const totalMonto = filtered.reduce((s, o) => s + (o.estimated_value ?? 0), 0);
   const totalComision = filtered.reduce((s, o) => s + commission(o.estimated_value ?? 0), 0);
 
@@ -56,7 +63,13 @@ export function PipelineManager({ role, viewerId }: { role: Role; viewerId: stri
       <PageHeader
         title="Oportunidades"
         subtitle={`${filtered.length} oportunidad${filtered.length === 1 ? "" : "es"} · ${fmtCurrency(totalMonto)} monto anual · ${fmtCurrency(totalComision)} comisión`}
-        action={<CreateOpportunityModal onCreated={reload} />}
+        action={
+          <div className="flex items-center gap-2">
+            {/* Baja lo filtrado (partner + estado), no toda la red. */}
+            <DownloadButton prefix="oportunidades" columns={CSV_COLUMNS} rows={filtered} />
+            <CreateOpportunityModal onCreated={reload} />
+          </div>
+        }
       />
 
       <div className="flex flex-wrap items-center gap-3">
@@ -66,18 +79,19 @@ export function PipelineManager({ role, viewerId }: { role: Role; viewerId: stri
             <option key={p.id} value={p.id}>{p.name}</option>
           ))}
         </select>
-        <select value={stage} onChange={(e) => setStage(e.target.value)} className={selectClass}>
-          <option value="">Todos los estados</option>
-          {OPPORTUNITY_STAGES.map((s) => (
-            <option key={s} value={s}>{STAGE_LABELS[s]}</option>
-          ))}
-        </select>
+        {stage && (
+          <span className="text-xs font-medium text-zinc-500">
+            Filtrando por “{STAGE_LABELS[stage]}”
+          </span>
+        )}
         {(partner || stage) && (
-          <button onClick={() => { setPartner(""); setStage(""); }} className="text-xs font-medium text-zinc-400 hover:text-zinc-600">
+          <button onClick={() => { setPartner(""); setStage(null); }} className="text-xs font-medium text-zinc-400 hover:text-zinc-600">
             Limpiar filtros
           </button>
         )}
       </div>
+
+      <StageSummary opps={scoped} stage={stage} onStage={setStage} />
 
       {loading && <LoadingRow label="Cargando pipeline…" />}
       {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-500">{error}</p>}
@@ -92,6 +106,7 @@ export function PipelineManager({ role, viewerId }: { role: Role; viewerId: stri
             <Th>Código</Th>
             <Th>Prospecto</Th>
             <Th>Web site</Th>
+            <Th>Industria</Th>
             <Th>Partner</Th>
             <Th>Colab.</Th>
             <Th>Gemelos digitales</Th>
@@ -103,7 +118,14 @@ export function PipelineManager({ role, viewerId }: { role: Role; viewerId: stri
             {filtered.map((o) => (
               <Tr key={o.id} onClick={() => router.push(`/app/opportunities/${o.id}`)}>
                 <Td className="font-mono text-xs font-semibold text-brand">{opportunityCode(o.seq)}</Td>
-                <Td className="font-medium text-zinc-800">{o.client_name}</Td>
+                <Td className="font-medium text-zinc-800">
+                  {o.country && (
+                    <span title={countryByCode(o.country)?.name ?? o.country} className="mr-1.5">
+                      {flagEmoji(o.country)}
+                    </span>
+                  )}
+                  {o.client_name}
+                </Td>
                 <Td>
                   {o.website ? (
                     <a
@@ -119,6 +141,9 @@ export function PipelineManager({ role, viewerId }: { role: Role; viewerId: stri
                     <span className="text-zinc-400">—</span>
                   )}
                 </Td>
+                <Td className="text-zinc-500">
+                  {o.industry ? INDUSTRY_LABELS[o.industry] : <span className="text-zinc-400">—</span>}
+                </Td>
                 <Td className="text-zinc-600">{o.partner_name ?? "—"}</Td>
                 <Td className="text-zinc-500">{o.collaborators ?? "—"}</Td>
                 <Td className="text-zinc-500">{o.estimated_avatars ?? "—"}</Td>
@@ -126,7 +151,14 @@ export function PipelineManager({ role, viewerId }: { role: Role; viewerId: stri
                 <Td className="font-semibold text-brand">{fmtCurrency(commission(o.estimated_value ?? 0))}</Td>
                 <Td onClick={(e) => e.stopPropagation()}>
                   {canEditOpportunity(role, viewerId, o.partner_id) ? (
-                    <StageSelect oppId={o.id} stage={o.stage} onChanged={reload} />
+                    <StageSelect
+                      oppId={o.id}
+                      stage={o.stage}
+                      clientName={o.client_name}
+                      lostReason={o.lost_reason}
+                      lostNotes={o.lost_notes}
+                      onChanged={reload}
+                    />
                   ) : (
                     <StageBadge stage={o.stage} />
                   )}

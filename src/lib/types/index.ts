@@ -95,19 +95,101 @@ export type PartnerDeletion = {
 };
 
 // Commercial funnel stage — the single source of truth for where a prospect
-// sits in the sales process.
+// sits in the sales process. `closed_lost` es la salida: un estado terminal
+// que no forma parte del camino y siempre lleva un motivo.
 export type OpportunityStage =
   | "lead"
   | "meeting_scheduled"
   | "pilot"
   | "tenant_creation"
-  | "client";
+  | "client"
+  | "closed_lost";
+
+// Motivos por los que se pierde una oportunidad. Códigos estables en la base
+// (ver el check de `lost_reason`); las etiquetas se muestran en la UI.
+export const LOST_REASONS = [
+  "price",
+  "no_budget",
+  "competitor",
+  "no_response",
+  "timing",
+  "no_fit",
+  "other",
+] as const;
+
+export type LostReason = (typeof LOST_REASONS)[number];
+
+export const LOST_REASON_LABELS: Record<LostReason, string> = {
+  price: "Precio",
+  no_budget: "Sin presupuesto",
+  competitor: "Eligió a un competidor",
+  no_response: "El cliente dejó de responder",
+  timing: "No es el momento",
+  no_fit: "No encaja / sin caso de uso",
+  other: "Otro",
+};
+
+export function isLostReason(value: unknown): value is LostReason {
+  return LOST_REASONS.includes(value as LostReason);
+}
+
+// Industria del prospecto. Códigos estables en la base, etiquetas en español.
+// Aseguradoras, corredoras y brokers comparten "insurance": para el negocio son
+// el mismo mercado.
+export const INDUSTRIES = [
+  "insurance",
+  "banking",
+  "consulting",
+  "legal",
+  "technology",
+  "government",
+  "education",
+  "healthcare",
+  "retail",
+  "manufacturing",
+  "logistics",
+  "real_estate",
+  "hospitality",
+  "media",
+  "energy",
+  "agriculture",
+  "nonprofit",
+  "other",
+] as const;
+
+export type Industry = (typeof INDUSTRIES)[number];
+
+export const INDUSTRY_LABELS: Record<Industry, string> = {
+  insurance: "Seguros",
+  banking: "Banca y finanzas",
+  consulting: "Consultoría",
+  legal: "Legal",
+  technology: "Tecnología",
+  government: "Gobierno",
+  education: "Educación",
+  healthcare: "Salud",
+  retail: "Retail y consumo",
+  manufacturing: "Manufactura e industria",
+  logistics: "Logística y transporte",
+  real_estate: "Inmobiliaria y construcción",
+  hospitality: "Turismo y hotelería",
+  media: "Medios y publicidad",
+  energy: "Energía y servicios básicos",
+  agriculture: "Agro",
+  nonprofit: "ONG y fundaciones",
+  other: "Otra",
+};
+
+export function isIndustry(value: unknown): value is Industry {
+  return INDUSTRIES.includes(value as Industry);
+}
 
 export type Opportunity = {
   id: string;
   partner_id: string;
   client_name: string;
   website: string | null;
+  industry: Industry | null;
   collaborators: number | null;
   contact_name: string | null;
   contact_email: string | null;
@@ -120,6 +202,10 @@ export type Opportunity = {
   custom_price: number | null; // negotiated per-twin price for Enterprise
   notes: string | null;
   stage: OpportunityStage;
+  // Solo con stage = "closed_lost"; se limpian al reabrir.
+  lost_reason: LostReason | null;
+  lost_notes: string | null;
+  closed_lost_at: string | null;
   seq: number;
   // Client request (captured on the way to "Creación de tenant").
   video_platform: VideoPlatform | null;
@@ -187,14 +273,25 @@ export type Material = {
   created_at: string;
 };
 
-// Ordered for the funnel dropdown; keys match the DB check constraint.
+// El embudo, en orden. "closed_lost" queda fuera a propósito: no es un paso
+// del camino, así que no participa del orden ni de `stageReached`.
 export const OPPORTUNITY_STAGES = [
   "lead",
   "meeting_scheduled",
   "tenant_creation",
   "pilot",
   "client",
-] as const;
+] as const satisfies readonly OpportunityStage[];
+
+// Todas las etapas válidas, embudo + salida. Sirve para validar y para contar.
+export const ALL_OPPORTUNITY_STAGES: readonly OpportunityStage[] = [
+  ...OPPORTUNITY_STAGES,
+  "closed_lost",
+];
+
+export function isOpportunityStage(value: unknown): value is OpportunityStage {
+  return ALL_OPPORTUNITY_STAGES.includes(value as OpportunityStage);
+}
 
 export const STAGE_LABELS: Record<OpportunityStage, string> = {
   lead: "Lead",
@@ -202,6 +299,7 @@ export const STAGE_LABELS: Record<OpportunityStage, string> = {
   tenant_creation: "Creación de tenant",
   pilot: "Piloto",
   client: "Cliente cerrado",
+  closed_lost: "Cerrada perdida",
 };
 
 export const STAGE_STYLES: Record<OpportunityStage, string> = {
@@ -210,11 +308,16 @@ export const STAGE_STYLES: Record<OpportunityStage, string> = {
   pilot: "bg-blue-50 text-blue-700 ring-blue-600/20",
   tenant_creation: "bg-violet-50 text-violet-700 ring-violet-600/20",
   client: "bg-emerald-50 text-emerald-700 ring-emerald-600/20",
+  closed_lost: "bg-red-50 text-red-600 ring-red-500/20",
 };
 
-// True when `stage` is at or beyond `target` in the funnel order.
+// True when `stage` is at or beyond `target` in the funnel order. Una
+// oportunidad perdida no alcanzó nada: está fuera del embudo.
 export function stageReached(stage: OpportunityStage, target: OpportunityStage) {
-  return OPPORTUNITY_STAGES.indexOf(stage) >= OPPORTUNITY_STAGES.indexOf(target);
+  const funnel: readonly OpportunityStage[] = OPPORTUNITY_STAGES;
+  const i = funnel.indexOf(stage);
+  const t = funnel.indexOf(target);
+  return i >= 0 && t >= 0 && i >= t;
 }
 
 // From this stage on, the tenant-request block (país, plataforma, piloto,

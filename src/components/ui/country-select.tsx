@@ -21,7 +21,7 @@ export function CountrySelect({
     <div className={`flex flex-col gap-1.5 ${wrapperClassName}`.trim()}>
       <Label htmlFor={name}>{label}</Label>
       <Select id={name} name={name} defaultValue={defaultValue} required={required}>
-        <option value="">Select country…</option>
+        <option value="">Selecciona un país…</option>
         {COUNTRIES.map((c) => (
           <option key={c.code} value={c.code}>
             {flagEmoji(c.code)} {c.name}

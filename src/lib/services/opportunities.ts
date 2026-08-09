@@ -1,6 +1,19 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Opportunity, OpportunityStage, Profile, VideoPlatform } from "@/lib/types";
-import { OPPORTUNITY_STAGES, VIDEO_PLATFORMS, stageRequiresClientRequest } from "@/lib/types";
+import type {
+  Industry,
+  LostReason,
+  Opportunity,
+  OpportunityStage,
+  Profile,
+  VideoPlatform,
+} from "@/lib/types";
+import {
+  VIDEO_PLATFORMS,
+  isIndustry,
+  isLostReason,
+  isOpportunityStage,
+  stageRequiresClientRequest,
+} from "@/lib/types";
 import { annualAmount, type PlanKey, type BillingPeriod } from "@/lib/pricing";
 
 export type OpportunityWithPartner = Opportunity & { partner_name: string | null };
@@ -52,6 +65,8 @@ export async function getOpportunity(
 export type CreateOpportunityInput = {
   client_name: string;
   website?: string;
+  country?: string | null; // ISO alpha-2
+  industry?: Industry | null;
   collaborators?: number | null;
   estimated_avatars?: number | null;
   plan?: PlanKey;
@@ -71,10 +86,9 @@ function normalizeBilling(billing: unknown): BillingPeriod {
   return billing === "annual" ? "annual" : "monthly";
 }
 
+// Una oportunidad nace en el embudo: no se puede crear ya perdida.
 function normalizeStage(stage: unknown): OpportunityStage {
-  return OPPORTUNITY_STAGES.includes(stage as OpportunityStage)
-    ? (stage as OpportunityStage)
-    : "lead";
+  return isOpportunityStage(stage) && stage !== "closed_lost" ? stage : "lead";
 }
 
 export async function createOpportunity(
@@ -93,6 +107,8 @@ export async function createOpportunity(
       partner_id: partnerId,
       client_name: input.client_name.trim(),
       website: input.website || null,
+      country: input.country || null,
+      industry: isIndustry(input.industry) ? input.industry : null,
       collaborators: input.collaborators ?? null,
       estimated_avatars: avatars,
       plan,
@@ -112,6 +128,7 @@ export async function createOpportunity(
 export type UpdateOpportunityInput = Partial<{
   client_name: string;
   website: string | null;
+  industry: Industry | null;
   collaborators: number | null;
   estimated_avatars: number | null;
   plan: PlanKey;
@@ -119,6 +136,8 @@ export type UpdateOpportunityInput = Partial<{
   custom_price: number | null;
   notes: string | null;
   stage: OpportunityStage;
+  lost_reason: LostReason | null;
+  lost_notes: string | null;
   country: string | null;
   contact_name: string | null;
   contact_email: string | null;
@@ -133,6 +152,7 @@ export type UpdateOpportunityInput = Partial<{
 const PARTNER_FIELDS = [
   "client_name",
   "website",
+  "industry",
   "collaborators",
   "estimated_avatars",
   "plan",
@@ -140,6 +160,8 @@ const PARTNER_FIELDS = [
   "custom_price",
   "notes",
   "stage",
+  "lost_reason",
+  "lost_notes",
   "country",
   "contact_name",
   "contact_email",
@@ -184,7 +206,7 @@ export async function updateOpportunity(
     if (key in input) patch[key] = (input as Record<string, unknown>)[key];
   }
 
-  if ("stage" in patch && !OPPORTUNITY_STAGES.includes(patch.stage as OpportunityStage)) {
+  if ("stage" in patch && !isOpportunityStage(patch.stage)) {
     throw new Error("Etapa inválida.");
   }
   if (
@@ -193,6 +215,9 @@ export async function updateOpportunity(
     !VIDEO_PLATFORMS.includes(patch.video_platform as VideoPlatform)
   ) {
     throw new Error("Plataforma de videollamadas inválida.");
+  }
+  if ("industry" in patch && patch.industry != null && !isIndustry(patch.industry)) {
+    throw new Error("Industria inválida.");
   }
   if ("client_name" in patch) {
     const name = String(patch.client_name ?? "").trim();
@@ -208,6 +233,22 @@ export async function updateOpportunity(
   // Validate the client-request block against the resulting record.
   const next = { ...opp, ...patch } as Opportunity;
 
+  // Perder una oportunidad exige decir por qué; reabrirla borra el motivo. La
+  // base tiene el mismo pacto (opportunities_lost_reason_check), así que el
+  // patch nunca puede dejar etapa y motivo desalineados.
+  if (next.stage === "closed_lost") {
+    if (!isLostReason(next.lost_reason)) {
+      throw new Error("Indica el motivo por el que se perdió la oportunidad.");
+    }
+    patch.lost_reason = next.lost_reason;
+    patch.lost_notes = next.lost_notes?.trim() || null;
+    if (opp.stage !== "closed_lost") patch.closed_lost_at = new Date().toISOString();
+  } else if (opp.lost_reason != null || "lost_reason" in patch || "lost_notes" in patch) {
+    patch.lost_reason = null;
+    patch.lost_notes = null;
+    patch.closed_lost_at = null;
+  }
+
   // Recompute the annual contract value when any pricing input changed.
   if (PRICING_FIELDS.some((f) => f in patch)) {
     patch.estimated_value = annualAmount(
@@ -219,15 +260,15 @@ export async function updateOpportunity(
   }
   if (stageRequiresClientRequest(next.stage)) {
     const missing: string[] = [];
-    if (!next.country?.trim()) missing.push("país de la empresa");
+    // El país vive en la información de la oportunidad; el resto, en la
+    // solicitud de creación de tenant.
+    if (!next.country?.trim()) missing.push("país del cliente");
     if (!next.video_platform) missing.push("plataforma de videollamadas");
     if (next.requires_pilot == null) missing.push("¿requiere piloto?");
     if (!next.contact_name?.trim()) missing.push("nombre del contacto");
     if (!next.contact_email?.trim()) missing.push("correo del contacto");
     if (missing.length) {
-      throw new Error(
-        `Para pasar a "Piloto" completa la solicitud de creación de tenant: ${missing.join(", ")}.`,
-      );
+      throw new Error(`Para pasar a "Piloto" completa: ${missing.join(", ")}.`);
     }
   }
 

@@ -7,6 +7,7 @@ const TONE_BY_STAGE: Record<OpportunityStage, BadgeTone> = {
   pilot: "blue",
   tenant_creation: "brand",
   client: "emerald",
+  closed_lost: "red",
 };
 
 export function StageBadge({ stage }: { stage: OpportunityStage }) {
