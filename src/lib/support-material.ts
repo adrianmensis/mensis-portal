@@ -25,11 +25,13 @@ export type MaterialSection = {
 // id from a watch URL (youtube.com/watch?v=ID) or an embed src.
 export type AcademyVideo = { youtubeId: string; title: string };
 
+// `playlistId` es opcional: una serie puede empezar en el portal antes de tener
+// su playlist armada en YouTube. Sin id no se muestra el enlace "Ver playlist".
 export type AcademyPlaylist = {
   id: string;
   title: string;
   description?: string;
-  playlistId: string;
+  playlistId?: string;
   videos: AcademyVideo[];
 };
 
@@ -48,6 +50,7 @@ export const ACADEMY: AcademyPlaylist[] = [
       { youtubeId: "r20clvrStRk", title: "Módulo #6: Creación de Rutas de Aprendizaje 📚" },
       { youtubeId: "cV8ghuAFcKA", title: "Módulo #7: Funcionalidades 🛠️ y Beneficios 💡" },
       { youtubeId: "wzw5PfbnEDE", title: "🗺️🛠️ Mensis Tour Partner Toolkit: Domina los Recursos Oficiales de Mensis 🔗" },
+      { youtubeId: "AYuBr4uSt-c", title: "Lanzamiento del Portal Exclusivo para Partners" },
     ],
   },
   {
@@ -57,6 +60,7 @@ export const ACADEMY: AcademyPlaylist[] = [
     playlistId: "PLqh3nKzRgK1ua-RwWvwA12Zwj4wo3BkOM",
     videos: [
       { youtubeId: "MDMYibe0Goc", title: "Integración con WhatsApp, Portugués, Dashboard y Tu Logo 🌎🤖" },
+      { youtubeId: "oQvlmtzaiSg", title: "Escala tus Ventas con el Nuevo Portal de Partners 🚀" },
     ],
   },
   {
@@ -69,6 +73,28 @@ export const ACADEMY: AcademyPlaylist[] = [
       { youtubeId: "slaMhGcOsx0", title: "🚀 El Pitch Perfecto 🎯 Simulacro de Ventas" },
       { youtubeId: "nHvug049mHQ", title: "El Arte de Vender IA: Tácticas Comerciales para AI Partners 🏆" },
       { youtubeId: "RS_sR0jWcuQ", title: "🎯 El Simulador Comercial de Mensis" },
+    ],
+  },
+  {
+    id: "codigo-abierto",
+    title: "🌐 Código Abierto // Inteligencia Colectiva 🧠",
+    description: "Eventos abiertos al público.",
+    videos: [
+      {
+        youtubeId: "OFMeaW7nw9Q",
+        title: "👥 Webinar La IA que no reemplaza personas: Multiplica su experiencia 🚀",
+      },
+    ],
+  },
+  {
+    id: "ia-aplicada",
+    title: "🦾 IA Aplicada: Casos de Uso Reales 🛠️",
+    description: "Cómo lo resolvieron otros clientes, caso por caso.",
+    videos: [
+      {
+        youtubeId: "bkJzfkHuYcU",
+        title: "🎓 El Aula del Futuro Hoy: Gemelos Digitales en Educación // Caso Cocoserv ⚙️",
+      },
     ],
   },
 ];

@@ -38,17 +38,19 @@ export function AcademyLibrary() {
                   </div>
                 </div>
               </button>
-              <a
-                href={`https://www.youtube.com/playlist?list=${pl.playlistId}`}
-                target="_blank"
-                rel="noreferrer"
-                className="hidden shrink-0 items-center gap-1 text-xs font-semibold text-brand hover:underline sm:inline-flex"
-              >
-                Ver playlist
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M7 17 17 7" /><path d="M7 7h10v10" />
-                </svg>
-              </a>
+              {pl.playlistId && (
+                <a
+                  href={`https://www.youtube.com/playlist?list=${pl.playlistId}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="hidden shrink-0 items-center gap-1 text-xs font-semibold text-brand hover:underline sm:inline-flex"
+                >
+                  Ver playlist
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M7 17 17 7" /><path d="M7 7h10v10" />
+                  </svg>
+                </a>
+              )}
             </div>
 
             {isOpen && (
