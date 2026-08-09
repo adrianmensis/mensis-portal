@@ -2,13 +2,8 @@
 
 import type { PartnerWithCount } from "@/lib/services/partners";
 import { daysSince, partnerHealth } from "@/lib/partner-health";
-import {
-  WEEKLY_SIGNED_GOAL,
-  currentWeek,
-  daysLeftInWeek,
-  signedInWeek,
-  weekLabel,
-} from "@/lib/partner-goal";
+import { WEEKLY_SIGNED_GOAL, signedInWeek } from "@/lib/partner-goal";
+import { currentWeek, daysLeftInWeek, weekLabel } from "@/lib/week";
 import { PARTNER_STAGES, type PartnerStage } from "@/lib/types";
 import { StatCard } from "@/components/ui/stat-card";
 

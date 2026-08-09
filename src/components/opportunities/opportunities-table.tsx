@@ -8,6 +8,7 @@ import { fmtCurrency, opportunityCode } from "@/lib/format";
 import { commission, COMMISSION_RATE } from "@/lib/pricing";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
+import { MoneyTile } from "@/components/ui/money-tile";
 import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingRow } from "@/components/ui/spinner";
 import { StageBadge } from "@/components/ui/stage-badge";
@@ -38,11 +39,12 @@ export function OpportunitiesTable({ title = "Mis oportunidades" }: { title?: st
   const list = opps ?? [];
   const closed = list.filter((o) => o.stage === "client");
   const lost = list.filter((o) => o.stage === "closed_lost");
-  const comisionCerrada = closed.reduce((s, o) => s + commission(o.estimated_value ?? 0), 0);
   // El pipeline abierto es lo que sigue vivo: ni ganado ni perdido.
-  const comisionPotencial = list
-    .filter((o) => o.stage !== "client" && o.stage !== "closed_lost")
-    .reduce((s, o) => s + commission(o.estimated_value ?? 0), 0);
+  const abiertas = list.filter((o) => o.stage !== "client" && o.stage !== "closed_lost");
+  const montoEnJuego = abiertas.reduce((s, o) => s + (o.estimated_value ?? 0), 0);
+  const montoCerrado = closed.reduce((s, o) => s + (o.estimated_value ?? 0), 0);
+  const comisionPotencial = commission(montoEnJuego);
+  const comisionCerrada = commission(montoCerrado);
   const rows = stage ? list.filter((o) => o.stage === stage) : list;
 
   return (
@@ -61,14 +63,30 @@ export function OpportunitiesTable({ title = "Mis oportunidades" }: { title?: st
 
       {opps && opps.length > 0 && (
         <>
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <StatCard
               label="Oportunidades"
               value={opps.length}
               sub={`${closed.length} ganada${closed.length === 1 ? "" : "s"} · ${lost.length} perdida${lost.length === 1 ? "" : "s"}`}
             />
-            <StatCard label="Comisión potencial" value={fmtCurrency(comisionPotencial)} sub="pipeline abierto (anual)" />
-            <StatCard label="Comisión cerrada" value={fmtCurrency(comisionCerrada)} sub="clientes cerrados (anual)" />
+            <MoneyTile
+              label="Monto en juego"
+              value={fmtCurrency(montoEnJuego)}
+              tone="brand"
+              sub="pipeline abierto (anual)"
+            />
+            <MoneyTile
+              label="Comisión potencial"
+              value={fmtCurrency(comisionPotencial)}
+              tone="brand"
+              sub={`${COMMISSION_RATE * 100}% del pipeline abierto`}
+            />
+            <MoneyTile
+              label="Comisión cerrada"
+              value={fmtCurrency(comisionCerrada)}
+              tone="emerald"
+              sub={`${fmtCurrency(montoCerrado)} en clientes cerrados`}
+            />
           </div>
 
           <StageSummary opps={list} stage={stage} onStage={setStage} />

@@ -16,6 +16,7 @@ import { INDUSTRY_LABELS, STAGE_LABELS, type OpportunityStage, type Role } from 
 import { countryByCode, flagEmoji } from "@/lib/countries";
 import { opportunityCsvColumns } from "@/lib/opportunity-csv";
 import { DownloadButton } from "@/components/ui/download-button";
+import { MoneyTile } from "@/components/ui/money-tile";
 import { StageSelect } from "./stage-select";
 import { CreateOpportunityModal } from "@/components/opportunities/create-opportunity-modal";
 import { StageSummary } from "@/components/opportunities/stage-summary";
@@ -57,20 +58,19 @@ export function PipelineManager({ role, viewerId }: { role: Role; viewerId: stri
   const filtered = scoped.filter((o) => !stage || o.stage === stage);
   // Los montos suman lo que sigue en juego: una oportunidad perdida no es
   // dinero, así que queda fuera del total (y se avisa cuántas se dejaron).
-  const enJuego = filtered.filter((o) => o.stage !== "closed_lost");
-  const perdidas = filtered.length - enJuego.length;
-  const totalMonto = enJuego.reduce((s, o) => s + (o.estimated_value ?? 0), 0);
-  const totalComision = enJuego.reduce((s, o) => s + commission(o.estimated_value ?? 0), 0);
+  const enJuego = filtered.filter((o) => o.stage !== "client" && o.stage !== "closed_lost");
+  const cerradas = filtered.filter((o) => o.stage === "client");
+  const perdidas = filtered.filter((o) => o.stage === "closed_lost");
+  const sum = (rows: typeof filtered) => rows.reduce((s, o) => s + (o.estimated_value ?? 0), 0);
+  const montoEnJuego = sum(enJuego);
+  const montoCerrado = sum(cerradas);
+  const montoPerdido = sum(perdidas);
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Oportunidades"
-        subtitle={
-          `${filtered.length} oportunidad${filtered.length === 1 ? "" : "es"} · ` +
-          `${fmtCurrency(totalMonto)} monto anual · ${fmtCurrency(totalComision)} comisión` +
-          (perdidas ? ` · ${perdidas} perdida${perdidas === 1 ? "" : "s"} sin contar` : "")
-        }
+        subtitle={`${filtered.length} oportunidad${filtered.length === 1 ? "" : "es"} en la red`}
         action={
           <div className="flex items-center gap-2">
             {/* Baja lo filtrado (partner + estado), no toda la red. */}
@@ -79,6 +79,34 @@ export function PipelineManager({ role, viewerId }: { role: Role; viewerId: stri
           </div>
         }
       />
+
+      {/* Los montos siguen al filtro: lo que se ve arriba es lo de la tabla. */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <MoneyTile
+          label="Monto en juego"
+          value={fmtCurrency(montoEnJuego)}
+          tone="brand"
+          sub={`${enJuego.length} oportunidad${enJuego.length === 1 ? "" : "es"} abierta${
+            enJuego.length === 1 ? "" : "s"
+          } · ${fmtCurrency(commission(montoEnJuego))} de comisión`}
+        />
+        <MoneyTile
+          label="Cerrado"
+          value={fmtCurrency(montoCerrado)}
+          tone="emerald"
+          sub={`${cerradas.length} cliente${cerradas.length === 1 ? "" : "s"} · ${fmtCurrency(
+            commission(montoCerrado),
+          )} de comisión`}
+        />
+        <MoneyTile
+          label="Perdido"
+          value={fmtCurrency(montoPerdido)}
+          tone="red"
+          sub={`${perdidas.length} oportunidad${perdidas.length === 1 ? "" : "es"} cerrada${
+            perdidas.length === 1 ? "" : "s"
+          } perdida${perdidas.length === 1 ? "" : "s"}`}
+        />
+      </div>
 
       <div className="flex flex-wrap items-center gap-3">
         <select value={partner} onChange={(e) => setPartner(e.target.value)} className={selectClass}>

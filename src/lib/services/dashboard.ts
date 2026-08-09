@@ -3,6 +3,12 @@ import type { Opportunity, OpportunityStage, Profile, Role } from "@/lib/types";
 import { ALL_OPPORTUNITY_STAGES, ASSIGNABLE_PARTNER_ROLES } from "@/lib/types";
 import { seesNetworkPipeline } from "@/lib/auth/permissions";
 
+// Fechas crudas para los cortes por semana. El recorte lo hace el cliente, en
+// hora local: el servidor corre en UTC y movería de semana a todo lo cargado un
+// lunes temprano o un domingo tarde.
+export type OpportunityPulse = { created_at: string; lost_at: string | null };
+export type PartnerPulse = { joined: string; signed_on: string | null };
+
 export type DashboardData = {
   role: Role;
   partner_count: number;
@@ -11,12 +17,13 @@ export type DashboardData = {
   open_value: number; // value still in the active funnel (not won, not lost)
   lost_value: number; // value of opportunities closed as lost
   counts: Record<OpportunityStage, number>;
+  values: Record<OpportunityStage, number>; // monto anual acumulado por etapa
+  pulse: { opportunities: OpportunityPulse[]; partners: PartnerPulse[] };
   recent: Opportunity[];
 };
 
-const EMPTY_COUNTS = Object.fromEntries(
-  ALL_OPPORTUNITY_STAGES.map((s) => [s, 0]),
-) as Record<OpportunityStage, number>;
+const emptyByStage = () =>
+  Object.fromEntries(ALL_OPPORTUNITY_STAGES.map((s) => [s, 0])) as Record<OpportunityStage, number>;
 
 // RLS scopes `opportunities` automatically: admins see all rows, partner_admins
 // the network minus Mensis' own deals, partners only their own — so the same
@@ -31,27 +38,32 @@ export async function getDashboard(
     .order("created_at", { ascending: false });
   const opps = (data ?? []) as Opportunity[];
 
-  const counts = { ...EMPTY_COUNTS };
-  for (const o of opps) if (o.stage in counts) counts[o.stage] += 1;
+  const counts = emptyByStage();
+  const values = emptyByStage();
+  for (const o of opps) {
+    if (!(o.stage in counts)) continue; // etapa desconocida: no rompe el resumen
+    counts[o.stage] += 1;
+    values[o.stage] += o.estimated_value ?? 0;
+  }
 
-  const won_value = opps
-    .filter((o) => o.stage === "client")
-    .reduce((s, o) => s + (o.estimated_value ?? 0), 0);
+  const won_value = values.client;
+  const lost_value = values.closed_lost;
   // Pipeline abierto: lo que sigue vivo. Ni ganado ni perdido.
-  const open_value = opps
-    .filter((o) => o.stage !== "client" && o.stage !== "closed_lost")
-    .reduce((s, o) => s + (o.estimated_value ?? 0), 0);
-  const lost_value = opps
-    .filter((o) => o.stage === "closed_lost")
-    .reduce((s, o) => s + (o.estimated_value ?? 0), 0);
+  const open_value = ALL_OPPORTUNITY_STAGES.filter((s) => s !== "client" && s !== "closed_lost")
+    .reduce((sum, s) => sum + values[s], 0);
 
   let partner_count = 0;
+  let partners: PartnerPulse[] = [];
   if (seesNetworkPipeline(profile.role)) {
-    const { count } = await supabase
+    const { data: rows } = await supabase
       .from("profiles")
-      .select("*", { count: "exact", head: true })
+      .select("created_at, entry_date, signed_on")
       .in("role", [...ASSIGNABLE_PARTNER_ROLES]);
-    partner_count = count ?? 0;
+    const list = (rows ?? []) as Pick<Profile, "created_at" | "entry_date" | "signed_on">[];
+    partner_count = list.length;
+    // Un partner "entra" en su fecha de ingreso; si no se cargó, en el alta de
+    // la cuenta. Mismo criterio que usa el módulo de Partners.
+    partners = list.map((p) => ({ joined: p.entry_date ?? p.created_at, signed_on: p.signed_on }));
   }
 
   return {
@@ -62,6 +74,11 @@ export async function getDashboard(
     open_value,
     lost_value,
     counts,
+    values,
+    pulse: {
+      opportunities: opps.map((o) => ({ created_at: o.created_at, lost_at: o.closed_lost_at })),
+      partners,
+    },
     recent: opps.slice(0, 5),
   };
 }
